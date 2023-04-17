@@ -1,0 +1,1 @@
+/usr/bin/cc -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal CMakeFiles/rptftp.dir/src/conn_map.c.o CMakeFiles/rptftp.dir/src/main.c.o CMakeFiles/rptftp.dir/src/networking.c.o CMakeFiles/rptftp.dir/src/tftp.c.o -o bin/rptftp  lib/rplib/librplib.a 

@@ -1,0 +1,2 @@
+/usr/bin/ar qc librplib.a CMakeFiles/rplib.dir/src/io.c.o CMakeFiles/rplib.dir/src/prior_ll_lib.c.o CMakeFiles/rplib.dir/src/queue_ll_lib.c.o CMakeFiles/rplib.dir/src/tpool.c.o CMakeFiles/rplib.dir/src/vector.c.o
+/usr/bin/ranlib librplib.a

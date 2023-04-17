@@ -1,0 +1,1 @@
+/usr/bin/cc -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal CMakeFiles/rpchat.dir/src/conn_map.c.o CMakeFiles/rpchat.dir/src/main.c.o CMakeFiles/rpchat.dir/src/networking.c.o CMakeFiles/rpchat.dir/src/tftp.c.o -o bin/rpchat  lib/rplib/librplib.a 

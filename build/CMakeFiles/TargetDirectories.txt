@@ -1,0 +1,6 @@
+/home/bktiel/CLionProjects/rptftp/build/CMakeFiles/rptftp.dir
+/home/bktiel/CLionProjects/rptftp/build/CMakeFiles/edit_cache.dir
+/home/bktiel/CLionProjects/rptftp/build/CMakeFiles/rebuild_cache.dir
+/home/bktiel/CLionProjects/rptftp/build/lib/rplib/CMakeFiles/rplib.dir
+/home/bktiel/CLionProjects/rptftp/build/lib/rplib/CMakeFiles/edit_cache.dir
+/home/bktiel/CLionProjects/rptftp/build/lib/rplib/CMakeFiles/rebuild_cache.dir
