@@ -1,6 +1,10 @@
-//
-// Created by bktiel on 1/22/23.
-//
+/** @file rp_common.h
+ *
+ * @brief Implements convenience variables useful to multiple projects
+ *
+ * @par
+ * COPYRIGHT NOTICE: None
+ */
 
 #ifndef RPLIB_RP_COMMON_H
 #define RPLIB_RP_COMMON_H
@@ -28,3 +32,5 @@ typedef enum
 } return_code_t;
 
 #endif // RPLIB_RP_COMMON_H
+
+/*** end of file ***/

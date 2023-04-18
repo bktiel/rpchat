@@ -3,12 +3,20 @@
 This program implements RFC 1350, but the standard does not specify some particulars useful for translating specifications
 to a functioning program. This file includes all of the assumptions made for the program.
 
-### Default Directory
+### Default Port
 
-The default directory is assumed to be the user's home directory. This assumption is necessary because a default
-directory must be
-set in the program. It is reasonable because users should have r/w access to their home directoryThis assumption also
-depends on the environment variable $HOME being present, which is reasonable on most shell implementations.
+The default port to host the server on is `9001`. This is a necessary assumption because in the absence
+of user input a port should be selected to present least astonishment. This is a reasonable assumption
+because there is no prescribed port for Basic Chat Protocol. Additionally, `9001` is in the unprivileged port range 
+and is not commonly associated with many other applications, so it is unlikely to present conflicts to the user. 
+
+### Maximum String Length
+
+The maximum length for the contents of a string object in this program is `4095`. This is a necessary assumption
+because a buffer must be created within each string struct definition in the declaration for the contents char array.
+This is a reasonable assumption because the C99 standard requires string literals to be 4095 characters or less. While
+no similar limit exists for the size of a character array, the C99 string literal standard is a reasonable baseline.
+https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf
 
 ### Default Timeout
 

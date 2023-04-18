@@ -42,5 +42,5 @@ foreach(LIBRARY ${LIBRARIES})
     add_subdirectory("${LIBRARIES_DIR}/${LIBRARY}")
 endforeach(LIBRARY)
 
-add_executable(${BINARY_NAME} ${BINARY_SOURCE})
+add_executable(${BINARY_NAME} ${BINARY_SOURCE} include/basic_chat.h src/basic_chat.c src/networking.c include/networking.h)
 target_link_libraries(${BINARY_NAME} ${LIBRARIES})
