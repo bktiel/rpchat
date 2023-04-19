@@ -46,9 +46,9 @@ int rpchat_handle_register(char *buf);
 
 int rpchat_handle_send(char *buf);
 
-int rpchat_deliver_msg(char *buf);
+int rpchat_send_deliver(char *buf);
 
-int rpchat_send_status();
+int rpchat_send_status(u_int8_t status);
 
 
 

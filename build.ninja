@@ -44,8 +44,8 @@ cmake_ninja_workdir = /home/bktiel/CLionProjects/rpchat/
 
 build cmake_object_order_depends_target_rpchat: phony || cmake_object_order_depends_target_rplib
 
-build CMakeFiles/rpchat.dir/src/conn_map.c.o: C_COMPILER__rpchat_ /home/bktiel/CLionProjects/rpchat/src/conn_map.c || cmake_object_order_depends_target_rpchat
-  DEP_FILE = CMakeFiles/rpchat.dir/src/conn_map.c.o.d
+build CMakeFiles/rpchat.dir/src/basic_chat.c.o: C_COMPILER__rpchat_ /home/bktiel/CLionProjects/rpchat/src/basic_chat.c || cmake_object_order_depends_target_rpchat
+  DEP_FILE = CMakeFiles/rpchat.dir/src/basic_chat.c.o.d
   FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -fdiagnostics-color=always
   INCLUDES = -I/home/bktiel/CLionProjects/rpchat/include -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include
   OBJECT_DIR = CMakeFiles/rpchat.dir
@@ -71,15 +71,6 @@ build CMakeFiles/rpchat.dir/src/networking.c.o: C_COMPILER__rpchat_ /home/bktiel
   TARGET_COMPILE_PDB = CMakeFiles/rpchat.dir/
   TARGET_PDB = bin/rpchat.pdb
 
-build CMakeFiles/rpchat.dir/src/tftp.c.o: C_COMPILER__rpchat_ /home/bktiel/CLionProjects/rpchat/src/tftp.c || cmake_object_order_depends_target_rpchat
-  DEP_FILE = CMakeFiles/rpchat.dir/src/tftp.c.o.d
-  FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -fdiagnostics-color=always
-  INCLUDES = -I/home/bktiel/CLionProjects/rpchat/include -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include
-  OBJECT_DIR = CMakeFiles/rpchat.dir
-  OBJECT_FILE_DIR = CMakeFiles/rpchat.dir/src
-  TARGET_COMPILE_PDB = CMakeFiles/rpchat.dir/
-  TARGET_PDB = bin/rpchat.pdb
-
 
 # =============================================================================
 # Link build statements for EXECUTABLE target rpchat
@@ -88,7 +79,7 @@ build CMakeFiles/rpchat.dir/src/tftp.c.o: C_COMPILER__rpchat_ /home/bktiel/CLion
 #############################################
 # Link the executable bin/rpchat
 
-build bin/rpchat: C_EXECUTABLE_LINKER__rpchat_ CMakeFiles/rpchat.dir/src/conn_map.c.o CMakeFiles/rpchat.dir/src/main.c.o CMakeFiles/rpchat.dir/src/networking.c.o CMakeFiles/rpchat.dir/src/tftp.c.o | lib/rplib/librplib.a || lib/rplib/librplib.a
+build bin/rpchat: C_EXECUTABLE_LINKER__rpchat_ CMakeFiles/rpchat.dir/src/basic_chat.c.o CMakeFiles/rpchat.dir/src/main.c.o CMakeFiles/rpchat.dir/src/networking.c.o | lib/rplib/librplib.a || lib/rplib/librplib.a
   FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal
   LINK_LIBRARIES = lib/rplib/librplib.a
   OBJECT_DIR = CMakeFiles/rpchat.dir
@@ -135,44 +126,8 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 
 build cmake_object_order_depends_target_rplib: phony || lib/rplib/CMakeFiles/rplib.dir
 
-build lib/rplib/CMakeFiles/rplib.dir/src/io.c.o: C_COMPILER__rplib_ /home/bktiel/CLionProjects/rpchat/lib/rplib/src/io.c || cmake_object_order_depends_target_rplib
-  DEP_FILE = lib/rplib/CMakeFiles/rplib.dir/src/io.c.o.d
-  FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -fdiagnostics-color=always
-  INCLUDES = -I/home/bktiel/CLionProjects/rpchat/include -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include/rplib -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include
-  OBJECT_DIR = lib/rplib/CMakeFiles/rplib.dir
-  OBJECT_FILE_DIR = lib/rplib/CMakeFiles/rplib.dir/src
-  TARGET_COMPILE_PDB = lib/rplib/CMakeFiles/rplib.dir/rplib.pdb
-  TARGET_PDB = lib/rplib/librplib.pdb
-
-build lib/rplib/CMakeFiles/rplib.dir/src/prior_ll_lib.c.o: C_COMPILER__rplib_ /home/bktiel/CLionProjects/rpchat/lib/rplib/src/prior_ll_lib.c || cmake_object_order_depends_target_rplib
-  DEP_FILE = lib/rplib/CMakeFiles/rplib.dir/src/prior_ll_lib.c.o.d
-  FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -fdiagnostics-color=always
-  INCLUDES = -I/home/bktiel/CLionProjects/rpchat/include -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include/rplib -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include
-  OBJECT_DIR = lib/rplib/CMakeFiles/rplib.dir
-  OBJECT_FILE_DIR = lib/rplib/CMakeFiles/rplib.dir/src
-  TARGET_COMPILE_PDB = lib/rplib/CMakeFiles/rplib.dir/rplib.pdb
-  TARGET_PDB = lib/rplib/librplib.pdb
-
-build lib/rplib/CMakeFiles/rplib.dir/src/queue_ll_lib.c.o: C_COMPILER__rplib_ /home/bktiel/CLionProjects/rpchat/lib/rplib/src/queue_ll_lib.c || cmake_object_order_depends_target_rplib
-  DEP_FILE = lib/rplib/CMakeFiles/rplib.dir/src/queue_ll_lib.c.o.d
-  FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -fdiagnostics-color=always
-  INCLUDES = -I/home/bktiel/CLionProjects/rpchat/include -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include/rplib -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include
-  OBJECT_DIR = lib/rplib/CMakeFiles/rplib.dir
-  OBJECT_FILE_DIR = lib/rplib/CMakeFiles/rplib.dir/src
-  TARGET_COMPILE_PDB = lib/rplib/CMakeFiles/rplib.dir/rplib.pdb
-  TARGET_PDB = lib/rplib/librplib.pdb
-
-build lib/rplib/CMakeFiles/rplib.dir/src/tpool.c.o: C_COMPILER__rplib_ /home/bktiel/CLionProjects/rpchat/lib/rplib/src/tpool.c || cmake_object_order_depends_target_rplib
-  DEP_FILE = lib/rplib/CMakeFiles/rplib.dir/src/tpool.c.o.d
-  FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -fdiagnostics-color=always
-  INCLUDES = -I/home/bktiel/CLionProjects/rpchat/include -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include/rplib -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include
-  OBJECT_DIR = lib/rplib/CMakeFiles/rplib.dir
-  OBJECT_FILE_DIR = lib/rplib/CMakeFiles/rplib.dir/src
-  TARGET_COMPILE_PDB = lib/rplib/CMakeFiles/rplib.dir/rplib.pdb
-  TARGET_PDB = lib/rplib/librplib.pdb
-
-build lib/rplib/CMakeFiles/rplib.dir/src/vector.c.o: C_COMPILER__rplib_ /home/bktiel/CLionProjects/rpchat/lib/rplib/src/vector.c || cmake_object_order_depends_target_rplib
-  DEP_FILE = lib/rplib/CMakeFiles/rplib.dir/src/vector.c.o.d
+build lib/rplib/CMakeFiles/rplib.dir/src/rp_common.c.o: C_COMPILER__rplib_ /home/bktiel/CLionProjects/rpchat/lib/rplib/src/rp_common.c || cmake_object_order_depends_target_rplib
+  DEP_FILE = lib/rplib/CMakeFiles/rplib.dir/src/rp_common.c.o.d
   FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -fdiagnostics-color=always
   INCLUDES = -I/home/bktiel/CLionProjects/rpchat/include -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include/rplib -I/home/bktiel/CLionProjects/rpchat/lib/rplib/include
   OBJECT_DIR = lib/rplib/CMakeFiles/rplib.dir
@@ -188,7 +143,7 @@ build lib/rplib/CMakeFiles/rplib.dir/src/vector.c.o: C_COMPILER__rplib_ /home/bk
 #############################################
 # Link the static library lib/rplib/librplib.a
 
-build lib/rplib/librplib.a: C_STATIC_LIBRARY_LINKER__rplib_ lib/rplib/CMakeFiles/rplib.dir/src/io.c.o lib/rplib/CMakeFiles/rplib.dir/src/prior_ll_lib.c.o lib/rplib/CMakeFiles/rplib.dir/src/queue_ll_lib.c.o lib/rplib/CMakeFiles/rplib.dir/src/tpool.c.o lib/rplib/CMakeFiles/rplib.dir/src/vector.c.o
+build lib/rplib/librplib.a: C_STATIC_LIBRARY_LINKER__rplib_ lib/rplib/CMakeFiles/rplib.dir/src/rp_common.c.o
   LANGUAGE_COMPILE_FLAGS = -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal
   OBJECT_DIR = lib/rplib/CMakeFiles/rplib.dir
   POST_BUILD = :

@@ -15,6 +15,8 @@
 /**
  * Constants
  */
+
+#define RPCHAT_MAX_USABLE_DESCRIPTOR_OFFSET 2
 #define RPCHAT_DEFAULT_TIMEOUT 90
 
 #endif /* RPCHAT_MAIN_H */

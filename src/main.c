@@ -14,8 +14,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 
 #include "basic_chat.h"
+#include "networking.h"
 #include "rp_common.h"
 
 /**
@@ -38,6 +40,7 @@ get_arguments(int argc, char **pp_argv, int *p_port_num, char *p_log_location)
     opterr = 0;
     while (-1 != (opt = getopt(argc, pp_argv, "t:l:h")))
     {
+        // port number
         if ('p' == opt)
         {
             if (!optarg)
@@ -47,6 +50,7 @@ get_arguments(int argc, char **pp_argv, int *p_port_num, char *p_log_location)
             }
             port_num = (int)strtol(optarg, &next_char, 10);
         }
+        // log file location
         if ('l' == opt)
         {
             if (!optarg)
@@ -56,12 +60,13 @@ get_arguments(int argc, char **pp_argv, int *p_port_num, char *p_log_location)
             }
             p_temp_log_location = optarg;
         }
+        // help message
         if ('h' == opt)
         {
             goto print_usage;
         }
     }
-    // if optional params not set, set to default
+    // if args not passed, set to default
     port_num = (0 == port_num) ? RPCHAT_DEFAULT_PORT : port_num;
     // commit all params to caller
     *p_port_num = port_num;
@@ -92,9 +97,21 @@ leave:
 int
 main(int argc, char **argv)
 {
-    int   port_num = 0; // port number to host on
-    char *p_log_location;
-    int   res = RPLIB_UNSUCCESS; // assume error (in case of early termination)
+    struct rlimit rlim;        // used for call to getrlimit
+    int res = RPLIB_UNSUCCESS; // assume error (in case of early termination)
+    int port_num = 0;          // port number to host on
+    long           max_descriptors = -1; // how many descriptors can
+                                        // open per-process
+    char *p_log_location = NULL;
+
+    // get max descriptors
+    if (0 > getrlimit(RLIMIT_NOFILE, &rlim))
+    {
+        perror("rlimit");
+        goto leave;
+    }
+    max_descriptors = rlim.rlim_cur - RPCHAT_MAX_USABLE_DESCRIPTOR_OFFSET;
+
 
     // parse command-line arguments
     if (RPLIB_SUCCESS != get_arguments(argc, argv, &port_num, p_log_location))
@@ -102,11 +119,22 @@ main(int argc, char **argv)
         goto leave;
     }
 
+    // validation
+    if (0 > max_descriptors)
+    {
+        perror("rlimit");
+        goto leave;
+    }
+
+    // TODO: verify log_location perms, make call to dup
+
     // print args (for situational awareness)
     printf("Port: %d\n", port_num);
-    printf("Log Location: %s\n", p_log_location);
+    printf("Log Location: %s\n",
+           NULL != p_log_location ? p_log_location : "stdout");
 
-    res = RPLIB_SUCCESS;
+    // begin
+    res = rpchat_begin_networking(port_num, max_descriptors);
 
 leave:
     return res;

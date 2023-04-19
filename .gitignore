@@ -1,0 +1,5 @@
+.cmake
+CMake
+.ninja_deps
+.idea
+CMakeFiles
