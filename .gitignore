@@ -1,5 +1,9 @@
 .cmake
 CMake
-.ninja_deps
+.ninja
 .idea
 CMakeFiles
+bin/*
+venv
+cmake-build-debug
+build.ninja
