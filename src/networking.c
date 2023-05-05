@@ -139,7 +139,7 @@ rpchat_monitor_connections(int h_fd_epoll, int max_connections)
     // iterate over events
     for(int i; i<max_connections; i++) {
         // new connection
-        if(p_events[i].data.)
+        //if(p_events[i].data.)
     }
 
 
