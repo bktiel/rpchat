@@ -3,7 +3,7 @@ CMake
 .ninja
 .idea
 CMakeFiles
-bin/*
+bin/
 venv
 cmake-build-debug
 build.ninja
