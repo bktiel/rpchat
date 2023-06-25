@@ -2,8 +2,16 @@
 CMake
 .ninja
 .idea
+.cmake
 CMakeFiles
 bin/
 venv
-cmake-build-debug
+cmake-build-debug*
 build.ninja
+.ninja_log
+reports
+reports_html
+compile_commands.json
+*CMakeCache.txt
+*Makefile
+*CMakeFiles*
