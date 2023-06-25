@@ -1,6 +1,6 @@
-/home/bktiel/CLionProjects/rpchat/CMakeFiles/rpchat.dir
-/home/bktiel/CLionProjects/rpchat/CMakeFiles/edit_cache.dir
-/home/bktiel/CLionProjects/rpchat/CMakeFiles/rebuild_cache.dir
-/home/bktiel/CLionProjects/rpchat/lib/rplib/CMakeFiles/rplib.dir
-/home/bktiel/CLionProjects/rpchat/lib/rplib/CMakeFiles/edit_cache.dir
-/home/bktiel/CLionProjects/rpchat/lib/rplib/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles/rpchat.dir
+/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles/edit_cache.dir
+/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/CMakeFiles/rplib.dir
+/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/CMakeFiles/edit_cache.dir
+/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/CMakeFiles/rebuild_cache.dir

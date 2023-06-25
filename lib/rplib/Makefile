@@ -48,27 +48,27 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /home/bktiel/Downloads/clion-2022.1.2/bin/cmake/linux/bin/cmake
+CMAKE_COMMAND = /usr/bin/cmake
 
 # The command to remove a file.
-RM = /home/bktiel/Downloads/clion-2022.1.2/bin/cmake/linux/bin/cmake -E rm -f
+RM = /usr/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/bktiel/Repos/rpchat
+CMAKE_SOURCE_DIR = /mnt/c/Users/cocka/Repos/rpchat
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/bktiel/Repos/rpchat
+CMAKE_BINARY_DIR = /mnt/c/Users/cocka/Repos/rpchat
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/home/bktiel/Downloads/clion-2022.1.2/bin/cmake/linux/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
+	/usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -78,7 +78,7 @@ edit_cache/fast: edit_cache
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/home/bktiel/Downloads/clion-2022.1.2/bin/cmake/linux/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/usr/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -87,14 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/bktiel/Repos/rpchat && $(CMAKE_COMMAND) -E cmake_progress_start /home/bktiel/Repos/rpchat/CMakeFiles /home/bktiel/Repos/rpchat/lib/rplib//CMakeFiles/progress.marks
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bktiel/Repos/rpchat/CMakeFiles 0
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/cocka/Repos/rpchat/CMakeFiles /mnt/c/Users/cocka/Repos/rpchat/lib/rplib//CMakeFiles/progress.marks
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/cocka/Repos/rpchat/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/clean
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/clean
 .PHONY : clean
 
 # The main clean target
@@ -103,22 +103,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/preinstall
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/preinstall
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/bktiel/Repos/rpchat && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 lib/rplib/CMakeFiles/rplib.dir/rule:
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/CMakeFiles/rplib.dir/rule
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lib/rplib/CMakeFiles/rplib.dir/rule
 .PHONY : lib/rplib/CMakeFiles/rplib.dir/rule
 
 # Convenience name for target.
@@ -127,32 +127,104 @@ rplib: lib/rplib/CMakeFiles/rplib.dir/rule
 
 # fast build rule for target.
 rplib/fast:
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/build
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/build
 .PHONY : rplib/fast
 
-src/rp_common.o: src/rp_common.c.o
-.PHONY : src/rp_common.o
+src/rplib_common.o: src/rplib_common.c.o
+.PHONY : src/rplib_common.o
 
 # target to build an object file
-src/rp_common.c.o:
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rp_common.c.o
-.PHONY : src/rp_common.c.o
+src/rplib_common.c.o:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_common.c.o
+.PHONY : src/rplib_common.c.o
 
-src/rp_common.i: src/rp_common.c.i
-.PHONY : src/rp_common.i
+src/rplib_common.i: src/rplib_common.c.i
+.PHONY : src/rplib_common.i
 
 # target to preprocess a source file
-src/rp_common.c.i:
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rp_common.c.i
-.PHONY : src/rp_common.c.i
+src/rplib_common.c.i:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_common.c.i
+.PHONY : src/rplib_common.c.i
 
-src/rp_common.s: src/rp_common.c.s
-.PHONY : src/rp_common.s
+src/rplib_common.s: src/rplib_common.c.s
+.PHONY : src/rplib_common.s
 
 # target to generate assembly for a file
-src/rp_common.c.s:
-	cd /home/bktiel/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rp_common.c.s
-.PHONY : src/rp_common.c.s
+src/rplib_common.c.s:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_common.c.s
+.PHONY : src/rplib_common.c.s
+
+src/rplib_hashmap.o: src/rplib_hashmap.c.o
+.PHONY : src/rplib_hashmap.o
+
+# target to build an object file
+src/rplib_hashmap.c.o:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.o
+.PHONY : src/rplib_hashmap.c.o
+
+src/rplib_hashmap.i: src/rplib_hashmap.c.i
+.PHONY : src/rplib_hashmap.i
+
+# target to preprocess a source file
+src/rplib_hashmap.c.i:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.i
+.PHONY : src/rplib_hashmap.c.i
+
+src/rplib_hashmap.s: src/rplib_hashmap.c.s
+.PHONY : src/rplib_hashmap.s
+
+# target to generate assembly for a file
+src/rplib_hashmap.c.s:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.s
+.PHONY : src/rplib_hashmap.c.s
+
+src/rplib_ll_queue.o: src/rplib_ll_queue.c.o
+.PHONY : src/rplib_ll_queue.o
+
+# target to build an object file
+src/rplib_ll_queue.c.o:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o
+.PHONY : src/rplib_ll_queue.c.o
+
+src/rplib_ll_queue.i: src/rplib_ll_queue.c.i
+.PHONY : src/rplib_ll_queue.i
+
+# target to preprocess a source file
+src/rplib_ll_queue.c.i:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.i
+.PHONY : src/rplib_ll_queue.c.i
+
+src/rplib_ll_queue.s: src/rplib_ll_queue.c.s
+.PHONY : src/rplib_ll_queue.s
+
+# target to generate assembly for a file
+src/rplib_ll_queue.c.s:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.s
+.PHONY : src/rplib_ll_queue.c.s
+
+src/rplib_tpool.o: src/rplib_tpool.c.o
+.PHONY : src/rplib_tpool.o
+
+# target to build an object file
+src/rplib_tpool.c.o:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.o
+.PHONY : src/rplib_tpool.c.o
+
+src/rplib_tpool.i: src/rplib_tpool.c.i
+.PHONY : src/rplib_tpool.i
+
+# target to preprocess a source file
+src/rplib_tpool.c.i:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.i
+.PHONY : src/rplib_tpool.c.i
+
+src/rplib_tpool.s: src/rplib_tpool.c.s
+.PHONY : src/rplib_tpool.s
+
+# target to generate assembly for a file
+src/rplib_tpool.c.s:
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.s
+.PHONY : src/rplib_tpool.c.s
 
 # Help Target
 help:
@@ -163,9 +235,18 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... rplib"
-	@echo "... src/rp_common.o"
-	@echo "... src/rp_common.i"
-	@echo "... src/rp_common.s"
+	@echo "... src/rplib_common.o"
+	@echo "... src/rplib_common.i"
+	@echo "... src/rplib_common.s"
+	@echo "... src/rplib_hashmap.o"
+	@echo "... src/rplib_hashmap.i"
+	@echo "... src/rplib_hashmap.s"
+	@echo "... src/rplib_ll_queue.o"
+	@echo "... src/rplib_ll_queue.i"
+	@echo "... src/rplib_ll_queue.s"
+	@echo "... src/rplib_tpool.o"
+	@echo "... src/rplib_tpool.i"
+	@echo "... src/rplib_tpool.s"
 .PHONY : help
 
 
@@ -177,6 +258,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/bktiel/Repos/rpchat && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /mnt/c/Users/cocka/Repos/rpchat && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

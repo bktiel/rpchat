@@ -13,7 +13,7 @@ file(GLOB LIB_SOURCE ${SOURCE_DIR}/*.c)
 add_library(${LIB_NAME} STATIC
         ${LIB_HEADERS}
         ${LIB_SOURCE}
-        )
+        include/rplib_ll_queue.h include/rplib_tpool.h)
 
 target_include_directories(${LIB_NAME} PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIB_NAME}>

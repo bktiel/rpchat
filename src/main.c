@@ -18,7 +18,7 @@
 
 #include "basic_chat.h"
 #include "networking.h"
-#include "rp_common.h"
+#include "rplib_common.h"
 
 /**
  * Parse command-line arguments
@@ -99,30 +99,24 @@ main(int argc, char **argv)
 {
     struct rlimit rlim;        // used for call to getrlimit
     int res = RPLIB_UNSUCCESS; // assume error (in case of early termination)
-    int port_num = 0;          // port number to host on
-    long           max_descriptors = -1; // how many descriptors can
+    int port_num                  = 0;  // port number to host on
+    unsigned long max_descriptors = -1; // how many descriptors can
                                         // open per-process
     char *p_log_location = NULL;
 
-    // get max descriptors
+    // get max descriptors using rlimit
+    // On error, -1 is returned, and errno is set appropriately.
     if (0 > getrlimit(RLIMIT_NOFILE, &rlim))
     {
         perror("rlimit");
         goto leave;
     }
+    // subtract amt known used descriptors from hypothetically available for use
     max_descriptors = rlim.rlim_cur - RPCHAT_MAX_USABLE_DESCRIPTOR_OFFSET;
-
 
     // parse command-line arguments
     if (RPLIB_SUCCESS != get_arguments(argc, argv, &port_num, p_log_location))
     {
-        goto leave;
-    }
-
-    // validation
-    if (0 > max_descriptors)
-    {
-        perror("rlimit");
         goto leave;
     }
 
@@ -134,7 +128,7 @@ main(int argc, char **argv)
            NULL != p_log_location ? p_log_location : "stdout");
 
     // begin
-    res = rpchat_begin_networking(port_num, max_descriptors);
+    res = rpchat_begin_chat_server(port_num, max_descriptors);
 
 leave:
     return res;

@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(BINARY_NAME rpchat)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 find_program(CLANG_TIDY_PROG clang-tidy)
 if (CLANG_TIDY_PROG)
@@ -15,7 +16,7 @@ if (CLANG_TIDY_PROG)
             -llvm-include-order, \
             -cppcoreguidelines-*, \
             -altera-struct-pack-align, \
-            -fsanitize=thread\
+            -fsanitize=thread, \
             -android-cloexec-open, \
             -hicpp-signed-bitwise, \
             -readability-magic-numbers, \
@@ -44,3 +45,9 @@ endforeach(LIBRARY)
 
 add_executable(${BINARY_NAME} ${BINARY_SOURCE} include/basic_chat.h src/basic_chat.c src/networking.c include/networking.h)
 target_link_libraries(${BINARY_NAME} ${LIBRARIES})
+
+
+add_custom_command(TARGET ${BINARY_NAME}
+        POST_BUILD
+        COMMAND ./codechecker.sh
+        )

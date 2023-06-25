@@ -1,6 +1,6 @@
 ## Assumptions
 
-This program implements RFC 1350, but the standard does not specify some particulars useful for translating
+This program implements a custom chat protocol, Basic Chat Protocol, but the standard does not specify some particulars useful for translating
 specifications
 to a functioning program. This file includes all of the assumptions made for the program.
 
@@ -33,6 +33,14 @@ the amount of descriptors that must be open at rest (epollfd, serverfd) provides
 The default socket timeout is 10 seconds. Because poll() runs every other second,
 10 seconds allows 10 attempts at resending before closing the connection. This number is ultimately arbitrary
 and picked for a balance between convenience and utility.
+
+### Maximum Message Length
+
+4111
+
+### Restricted to Printable ASCII (sans spaces)
+
+Because other characters can mess with strcmp and printing
 
 ### Filename Length
 

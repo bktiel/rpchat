@@ -9,6 +9,9 @@
 #ifndef RPLIB_RP_COMMON_H
 #define RPLIB_RP_COMMON_H
 
+#include "stdio.h"
+
+
 #ifndef NDEBUG
 #define RPLIB_DEBUG_PRINTF(format, ...) printf(format, __VA_ARGS__)
 #else

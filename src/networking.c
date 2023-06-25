@@ -8,20 +8,22 @@
 
 #include "networking.h"
 
+#include <fcntl.h>
 #include <malloc.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/epoll.h>
 
-#include "rp_common.h"
+#include "rplib_common.h"
 
 int
-rpchat_begin_networking(unsigned int port_num, unsigned int max_connections)
+rpchat_begin_networking(unsigned int port_num,
+                        int         *p_h_fd_server,
+                        int         *p_h_fd_epoll)
 {
-    int res        = RPLIB_UNSUCCESS; // default failure in case of early term
-    int loop_res   = RPLIB_SUCCESS;   // default success
-    int h_fd_epoll = -1;              // fd that describes epoll
+    int res           = RPLIB_ERROR; // default failure in case of early term
+    int h_fd_epoll    = -1;          // fd that describes epoll
     int h_sock_server = -1;
     struct epoll_event event_server;
 
@@ -51,21 +53,12 @@ rpchat_begin_networking(unsigned int port_num, unsigned int max_connections)
         goto leave;
     }
 
-    // begin awaiting events
-    for (;;)
-    {
-        loop_res = rpchat_monitor_connections(h_fd_epoll, max_connections);
-        if (RPLIB_UNSUCCESS == loop_res)
-        {
-            res = RPLIB_SUCCESS;
-            break;
-        }
-        else if (RPLIB_ERROR == loop_res)
-        {
-            res = RPLIB_UNSUCCESS;
-            break;
-        }
-    }
+    // set server and epoll FDs
+    *p_h_fd_server = h_sock_server;
+    *p_h_fd_epoll  = h_fd_epoll;
+
+    // return success
+    res = RPLIB_SUCCESS;
 
 leave:
     return res;
@@ -86,7 +79,7 @@ rpchat_setup_server_socket(unsigned int port_num)
         goto leave;
     }
 
-    // san addr to prevent unexpected behavior, then assign
+    // sanitize addr to prevent unexpected behavior, then assign
     memset(&addr, 0, sizeof(addr));
     addr.sin_family      = AF_INET;           // what type of addr (ipv4)
     addr.sin_addr.s_addr = htonl(INADDR_ANY); // what should we bind to
@@ -114,37 +107,67 @@ leave:
 }
 
 int
-rpchat_monitor_connections(int h_fd_epoll, int max_connections)
+rpchat_monitor_connections(int                 h_fd_epoll,
+                           struct epoll_event *p_ret_event_buf,
+                           unsigned int        max_connections)
 {
-    int res   = RPLIB_UNSUCCESS;  // default failure in case early term
-    int ready = 0;                // # events ready
-    struct epoll_event *p_events; // buffer for events
-
-    // allocate events buffer
-    p_events = calloc(max_connections, sizeof(struct epoll_event));
-    if(NULL==p_events) {
-        perror("malloc");
-        goto cleanup;
-    }
+    int res   = RPLIB_UNSUCCESS; // default failure in case early term
+    int ready = 0;               // num of events ready
 
     // block until events on watched fds
     // on event - 3 possibilities: error, new client, existing client
-    ready=epoll_wait(h_fd_epoll,p_events,max_connections,-1);
+    ready = epoll_wait(h_fd_epoll, p_ret_event_buf, max_connections, -1);
+
     // error state
-    if(0>ready) {
+    if (0 > ready)
+    {
         perror("epoll");
-        res=RPLIB_ERROR;
+        res = RPLIB_ERROR;
         goto leave;
     }
-    // iterate over events
-    for(int i; i<max_connections; i++) {
-        // new connection
-        //if(p_events[i].data.)
-    }
+    res = RPLIB_SUCCESS;
 
-
-cleanup:
-    free(p_events);
 leave:
     return res;
+}
+
+int
+rpchat_accept_new_connection(unsigned int h_fd_server)
+{
+    struct sockaddr_in client_addr;
+    socklen_t          client_addr_len = sizeof(client_addr);
+    int                h_new_fd        = RPLIB_ERROR;
+    int                res             = RPLIB_ERROR;
+
+    // accept new connection
+    h_new_fd = accept(
+        h_fd_server, (struct sockaddr *)&client_addr, &client_addr_len);
+
+    if (0 > h_new_fd)
+    {
+        perror("New connection");
+        res = RPLIB_ERROR;
+        goto leave;
+    }
+    // set nonblocking
+    res = fcntl(h_new_fd, F_SETFL, fcntl(h_new_fd, F_GETFL, 0) | O_NONBLOCK);
+    if (0 > res)
+    {
+        perror("fcntl");
+    }
+
+leave:
+    return res;
+}
+
+int rpchat_recvmsg(int h_fd_client, size_t len, char *p_buf) {
+    int read_bytes=0;
+
+    read_bytes=recv(h_fd_client,p_buf,len,0);
+
+    return read_bytes;
+}
+
+int rpchat_sendmsg(int h_fd_client, size_t len, char *p_buf) {
+
 }
