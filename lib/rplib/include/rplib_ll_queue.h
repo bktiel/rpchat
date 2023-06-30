@@ -15,7 +15,7 @@ typedef struct rplib_ll_queue_node
 {
     void                 *p_data;      // pointer to data
     size_t                data_size;   // size of data in bytes
-    struct rplib_ll_node *p_next_node; // next node
+    struct rplib_ll_queue_node *p_next_node; // next node
 } rplib_ll_queue_node_t;
 
 typedef struct rplib_ll_queue

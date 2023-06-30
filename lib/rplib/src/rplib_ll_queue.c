@@ -82,8 +82,7 @@ rplib_ll_queue_enqueue(rplib_ll_queue_t *p_queue,
     // if existing nodes, append to end
     else
     {
-        // cast necessary due to inability to forward declare typedef
-        p_queue->p_rear->p_next_node = (struct rplib_ll_node *)p_node;
+        p_queue->p_rear->p_next_node = p_node;
         p_queue->p_rear              = p_node;
     }
     goto leave;
