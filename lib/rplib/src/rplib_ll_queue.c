@@ -38,7 +38,6 @@ rplib_ll_queue_enqueue(rplib_ll_queue_t *p_queue,
                        void             *p_data,
                        size_t            data_size)
 {
-    char                  *res    = NULL;
     rplib_ll_queue_node_t *p_node = NULL; // node object
     void                  *p_buf  = NULL; // to contain data
     // asserts
@@ -50,10 +49,8 @@ rplib_ll_queue_enqueue(rplib_ll_queue_t *p_queue,
     p_buf  = malloc(data_size);
     if (NULL == p_node || NULL == p_buf)
     {
-        free(p_node);
-        free(p_buf);
         RPLIB_DEBUG_PRINTF("error: rplib_ll_queue, %s", "NODE MALLOC");
-        goto leave;
+        goto cleanup;
     }
     // copy data
     if (!memcpy(p_buf, p_data, data_size))
@@ -61,7 +58,8 @@ rplib_ll_queue_enqueue(rplib_ll_queue_t *p_queue,
         goto cleanup;
     }
     // set fields on node
-    p_node->p_data = p_buf;
+    p_node->p_data    = p_buf;
+    p_node->data_size = data_size;
     // update list
     // safely change size
     if (p_queue->size + 1 < INT_MAX)
@@ -88,9 +86,63 @@ rplib_ll_queue_enqueue(rplib_ll_queue_t *p_queue,
     goto leave;
 cleanup:
     free(p_node);
+    free(p_buf);
     p_node = NULL;
+    return NULL;
 leave:
     return p_node;
+}
+
+int
+rplib_ll_remove_node(rplib_ll_queue_t      *p_queue,
+                     rplib_ll_queue_node_t *p_tgt_node)
+{
+    int                    res         = RPLIB_UNSUCCESS;
+    rplib_ll_queue_node_t *p_prev_node = NULL;
+
+    // only node
+    if (1 == p_queue->size)
+    {
+        p_queue->p_front = NULL;
+        p_queue->p_rear  = NULL;
+        goto update;
+    }
+    // not only node, but is front node
+    else if (p_tgt_node == p_queue->p_front)
+    {
+        p_queue->p_front = p_tgt_node->p_next_node;
+        goto update;
+    }
+    // >1 node, not front node, so must be in between or at end
+    else
+    {
+        // get previous node
+        p_prev_node = p_queue->p_front;
+        while (p_prev_node->p_next_node != p_tgt_node)
+        {
+            p_prev_node = p_prev_node->p_next_node;
+        }
+        // update previous node's next node pointer
+        p_prev_node->p_next_node = p_tgt_node->p_next_node;
+        // if at end, set new rear
+        if (p_tgt_node == p_queue->p_rear)
+        {
+            p_queue->p_rear = p_prev_node;
+        }
+    }
+
+update:
+    // update size
+    p_queue->size--;
+    // free data
+    free(p_tgt_node->p_data);
+    p_tgt_node->p_data = NULL;
+    // free node
+    free(p_tgt_node);
+    p_tgt_node = NULL;
+
+    res = RPLIB_SUCCESS;
+    return res;
 }
 
 int
@@ -104,25 +156,7 @@ rplib_ll_queue_dequeue(rplib_ll_queue_t *p_queue)
     assert(p_queue->p_front->p_data); // node must have data
     // get target node
     p_tgt_node = p_queue->p_front;
-    // check if there's a sibling and update parent object accordingly
-    if (p_tgt_node->p_next_node)
-    {
-        p_queue->p_front = (rplib_ll_queue_node_t *)p_tgt_node->p_next_node;
-    }
-    else
-    {
-        p_queue->p_front = NULL;
-        p_queue->p_rear  = NULL;
-    }
-    // update size
-    p_queue->size--;
-    // remove first item from list
-    free(p_tgt_node->p_data);
-    p_tgt_node->p_data = NULL;
-    free(p_tgt_node);
-    p_tgt_node = NULL;
-    res        = RPLIB_SUCCESS;
-leave:
+    res        = rplib_ll_remove_node(p_queue, p_tgt_node);
     return res;
 }
 
@@ -134,7 +168,6 @@ rplib_ll_queue_peek(rplib_ll_queue_t *p_queue)
     assert(p_queue->p_front);
     // get first node
     p_res = p_queue->p_front;
-leave:
     return p_res;
 }
 
@@ -154,6 +187,6 @@ rplib_ll_queue_destroy(rplib_ll_queue_t *p_queue)
     // destroy parent
     free(p_queue);
     p_queue = NULL;
-leave:
+    // leave
     return res;
 }

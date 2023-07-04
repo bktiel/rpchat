@@ -8,12 +8,15 @@
 
 #include "networking.h"
 
+#include <asm-generic/errno.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <malloc.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <unistd.h>
 
 #include "rplib_common.h"
 
@@ -70,6 +73,7 @@ rpchat_setup_server_socket(unsigned int port_num)
     int                res = RPLIB_ERROR;  // initially error in case early term
     int                h_sock_server = -1; // server fd
     struct sockaddr_in addr;               // server address
+    int                reuse = 1; // required to have in stack frame to ref
 
     // open TCP socket
     h_sock_server = socket(AF_INET, SOCK_STREAM, 0);
@@ -84,6 +88,27 @@ rpchat_setup_server_socket(unsigned int port_num)
     addr.sin_family      = AF_INET;           // what type of addr (ipv4)
     addr.sin_addr.s_addr = htonl(INADDR_ANY); // what should we bind to
     addr.sin_port        = htons(port_num);   // what port to bind to
+
+    // additional options - reuse port and addr
+    if (0 > setsockopt(h_sock_server,
+                       SOL_SOCKET,
+                       SO_REUSEADDR,
+                       (const char *)&reuse,
+                       sizeof(reuse)))
+    {
+        perror("setsockopt");
+        goto leave;
+    }
+
+    if (0 > setsockopt(h_sock_server,
+                       SOL_SOCKET,
+                       SO_REUSEPORT,
+                       (const char *)&reuse,
+                       sizeof(reuse)))
+    {
+        perror("setsockopt");
+        goto leave;
+    }
 
     // attempt to bind to built address
     if (0 > bind(h_sock_server, (struct sockaddr *)&addr, sizeof(addr)))
@@ -121,11 +146,17 @@ rpchat_monitor_connections(int                 h_fd_epoll,
     // error state
     if (0 > ready)
     {
+        // check for interrupt - helps for gdb
+        if (errno == EINTR)
+        {
+            res = RPLIB_SUCCESS;
+            goto leave;
+        }
         perror("epoll");
         res = RPLIB_ERROR;
         goto leave;
     }
-    res = RPLIB_SUCCESS;
+    res = ready;
 
 leave:
     return res;
@@ -155,19 +186,48 @@ rpchat_accept_new_connection(unsigned int h_fd_server)
     {
         perror("fcntl");
     }
+    res = h_new_fd;
 
 leave:
     return res;
 }
 
-int rpchat_recvmsg(int h_fd_client, size_t len, char *p_buf) {
-    int read_bytes=0;
-
-    read_bytes=recv(h_fd_client,p_buf,len,0);
-
-    return read_bytes;
+int
+rpchat_close_connection(int h_fd_epoll, int h_fd)
+{
+    int res = RPLIB_UNSUCCESS;
+    // close connection
+    res = close(h_fd);
+    if (RPLIB_SUCCESS != res)
+    {
+        goto leave;
+    }
+    // remove from epoll consideration
+    res = epoll_ctl(h_fd_epoll, EPOLL_CTL_DEL, h_fd, NULL);
+    if (RPLIB_SUCCESS != res)
+    {
+        goto leave;
+    }
+leave:
+    return res;
 }
 
-int rpchat_sendmsg(int h_fd_client, size_t len, char *p_buf) {
+int
+rpchat_recvmsg(int h_fd_client, char *p_buf, size_t len)
+{
+    ssize_t read_bytes = 0;
 
+    read_bytes = recv(h_fd_client, p_buf, len, 0);
+
+    return 0 < read_bytes ? read_bytes : RPLIB_ERROR;
+}
+
+int
+rpchat_sendmsg(int h_fd_client, char *p_buf, size_t len)
+{
+    int sent_bytes = 0;
+
+    sent_bytes = send(h_fd_client, p_buf, len, 0);
+
+    return sent_bytes;
 }

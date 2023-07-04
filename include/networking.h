@@ -35,7 +35,7 @@ int rpchat_setup_server_socket(unsigned int port_num);
  * signal is received
  * @param h_fd_epoll epoll file descriptor to monitor
  * @param max_connections Maximum concurrent connections
- * @return RP_SUCCESS if no problems encountered, otherwise, RP_UNSUCCESS
+ * @return # events if no problems, RPLIB_ERR if problems
  */
 int rpchat_monitor_connections(int                 h_fd_epoll,
                                struct epoll_event *p_ret_event_buf,
@@ -43,18 +43,27 @@ int rpchat_monitor_connections(int                 h_fd_epoll,
 
 /**
  * Accept a new connection and return the socket descriptor
- * @param h_fd_server
+ * @param h_fd_server File descriptor for server
  * @return Socket descriptor of new connection on success, RPLIB_ERROR on problems
  */
 int rpchat_accept_new_connection(unsigned int h_fd_server);
 
 /**
+ * Close a connection and dependencies
+ * @param h_fd_epoll File descriptor for related epoll instance
+ * @param h_fd File descriptor for related connection
+ * @return RPLIB_SUCCESS on no problems, RPLIB_UNSUCCESS otherwise
+ */
+int
+rpchat_close_connection(int h_fd_epoll, int h_fd);
+
+/**
  * Receive message from a given client
  * @param h_fd_client FD of client to receive message from
  * @param p_buf Pointer to buffer in which to place message
- * @return Bytes read
+ * @return Bytes read, RPLIB_ERROR on error
  */
-int rpchat_recvmsg(int h_fd_client, size_t len, char *p_buf);
+int rpchat_recvmsg(int h_fd_client, char *p_buf, size_t len);
 
 /**
  * Send a message to a given client
@@ -62,7 +71,7 @@ int rpchat_recvmsg(int h_fd_client, size_t len, char *p_buf);
  * @param p_buf Pointer to buffer containing message to send
  * @return RPLIB_SUCCESS on success, else RPLIB_UNSUCCESS
  */
-int rpchat_sendmsg(int h_fd_client, size_t len, char *p_buf);
+int rpchat_sendmsg(int h_fd_client, char *p_buf, size_t len);
 
 #endif // RPCHAT_NETWORKING_H
 

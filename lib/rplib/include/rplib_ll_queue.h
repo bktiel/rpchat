@@ -44,6 +44,15 @@ rplib_ll_queue_node_t*  rplib_ll_queue_enqueue(rplib_ll_queue_t *p_queue,
                            void             *p_data,
                            size_t            data_size);
 
+
+/**
+ * Remove a specific node from the Queue
+ * @param p_queue Pointer to target Queue
+ * @param p_target_node Pointer to node to delete
+ * @return RPLIB_SUCCESS on removal, RPLIB_UNSUCCESS on failure
+ */
+int rplib_ll_remove_node(rplib_ll_queue_t *p_queue, rplib_ll_queue_node_t *p_target_node);
+
 /**
  * Removes the first node from the Queue
  * @param p_queue Target Queue

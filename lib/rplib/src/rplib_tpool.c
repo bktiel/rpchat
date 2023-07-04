@@ -37,6 +37,7 @@ rplib_tpool_initialize(rplib_tpool_t *p_tpool, size_t num_threads)
     // set fields
     p_tpool->num_threads   = num_threads;
     p_tpool->p_queue_tasks = rplib_ll_queue_create();
+    p_tpool->p_thread_buf  = calloc(num_threads, sizeof(pthread_t));
     // initialize pthread specific objects
     if (0 != pthread_mutex_init(&(p_tpool->mutex_task_queue), NULL)
         || 0 != pthread_mutex_init(&(p_tpool->mutex_thrd_count), NULL)
@@ -74,6 +75,8 @@ rplib_tpool_destroy(rplib_tpool_t *p_tpool, bool b_shutdown_immediate)
     pthread_cond_destroy(&(p_tpool->cond_threads_idle));
     // destroy tasks
     res = rplib_ll_queue_destroy(p_tpool->p_queue_tasks);
+    // destroy threadbuf
+    free(p_tpool->p_thread_buf);
     // destroy tpool
     free(p_tpool);
     p_tpool = NULL;
@@ -106,6 +109,7 @@ rplib_tpool_enqueue_task(rplib_tpool_t *p_tpool,
     pthread_cond_signal(&(p_tpool->cond_task_queue));
     // unlock
     pthread_mutex_unlock(&(p_tpool->mutex_task_queue));
+    res = RPLIB_SUCCESS;
 leave:
     return res;
 }
@@ -191,7 +195,8 @@ rplib_tpool_start(rplib_tpool_t *p_tpool)
             res = RPLIB_UNSUCCESS;
             goto leave;
         }
-        RPLIB_DEBUG_PRINTF("Notice: %s #%zu %s", "TPOOL THREAD",loop_index,"started.");
+        RPLIB_DEBUG_PRINTF(
+            "Notice: %s #%zu %s\n", "TPOOL THREAD", loop_index, "started.");
     }
     res = RPLIB_SUCCESS;
 leave:

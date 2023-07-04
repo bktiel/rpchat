@@ -4,6 +4,7 @@
 #include <malloc.h>
 #include <stdbool.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "endian.h"
 #include "networking.h"
@@ -21,13 +22,13 @@
 int
 rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
 {
-    int                 res             = RPLIB_UNSUCCESS; // assume failure
-    int                 h_fd_server     = RPLIB_ERROR;     // server socket fd
-    int                 h_fd_epoll      = RPLIB_ERROR;     // epoll instance fd
-    int                 loop_res        = RPLIB_SUCCESS;   // default success
-    rplib_tpool_t      *p_tpool         = NULL;            // threadpool
-    rplib_ll_queue_t   *p_conn_queue    = NULL; // queue for connections
-    struct epoll_event *p_ret_event_buf = NULL; // buffer for events
+    int                  res             = RPLIB_UNSUCCESS; // assume failure
+    int                  h_fd_server     = RPLIB_ERROR;     // server socket fd
+    int                  h_fd_epoll      = RPLIB_ERROR;     // epoll instance fd
+    int                  loop_res        = RPLIB_SUCCESS;   // default success
+    rplib_tpool_t       *p_tpool         = NULL;            // threadpool
+    rpchat_conn_queue_t *p_conn_queue    = NULL; // queue for connections
+    struct epoll_event  *p_ret_event_buf = NULL; // buffer for events
 
     // create tcp server socket and epoll instance
     res = rpchat_begin_networking(port_num, &h_fd_server, &h_fd_epoll);
@@ -44,11 +45,14 @@ rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
     }
 
     // create queue for connections
-    p_conn_queue = rplib_ll_queue_create();
+    p_conn_queue = rpchat_conn_queue_create();
     if (!p_conn_queue)
     {
         goto leave;
     }
+
+    // start threadpool
+    rplib_tpool_start(p_tpool);
 
     // begin awaiting events
     for (;;)
@@ -65,13 +69,15 @@ rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
         // wait for activity reported by epoll
         loop_res = rpchat_monitor_connections(
             h_fd_epoll, p_ret_event_buf, max_connections);
-        if (RPLIB_UNSUCCESS == loop_res)
+        //        if (RPLIB_UNSUCCESS == loop_res)
+        //        {
+        //            res = RPLIB_SUCCESS;
+        //            break;
+        //        }
+        if (RPLIB_ERROR == loop_res)
         {
-            res = RPLIB_SUCCESS;
-            break;
-        }
-        else if (RPLIB_ERROR == loop_res)
-        {
+            RPLIB_DEBUG_PRINTF("Error: %s \n",
+                               "Monitor Connections returned error");
             res = RPLIB_UNSUCCESS;
             break;
         }
@@ -81,7 +87,8 @@ rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
                              h_fd_epoll,
                              p_tpool,
                              max_connections,
-                             p_conn_queue);
+                             p_conn_queue,
+                             loop_res);
 
         // cleanup per loop
         free(p_ret_event_buf);
@@ -89,7 +96,7 @@ rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
     }
 
 cleanup:
-    rplib_ll_queue_destroy(p_conn_queue);
+    rpchat_conn_queue_destroy(p_conn_queue);
     free(p_ret_event_buf);
     p_ret_event_buf = NULL;
 
@@ -116,45 +123,121 @@ rpchat_toggle_descriptor(int                 h_fd_epoll,
     struct epoll_event delta_event; // contains new defs
     // set defs
     h_fd = ((rpchat_conn_info_t *)p_event->data.ptr)->h_fd;
-    if (enabled)
+    if (!enabled)
     {
-        delta_event.events = (EPOLLIN | EPOLLERR | EPOLLHUP);
+        res = epoll_ctl(h_fd_epoll, EPOLL_CTL_DEL, h_fd, NULL);
+        goto leave;
     }
-    else
-    {
-        delta_event.events = 0;
-    }
+    delta_event.events   = (EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET);
     delta_event.data.ptr = p_event->data.ptr;
     // mod descriptor
-    epoll_ctl(h_fd_epoll, EPOLL_CTL_MOD, h_fd, &delta_event);
+    epoll_ctl(h_fd_epoll, EPOLL_CTL_ADD, h_fd, &delta_event);
+leave:
+    return res;
+}
+
+/**
+ * Enqueue tasks into threadpool
+ * @param p_conn_info Pointer to `rpchat_conn_info_t` object involved in
+ * transaction
+ * @param p_tpool Pointer to threadpool object
+ * @param p_function Function pointer to task to execute
+ * @param p_arg Pointer to args to use with function
+ * @return RPLIB_SUCCESS on successful queue, RPLIB_UNSUCCESS on failure
+ */
+static int
+rpchat_conn_info_enqueue_task(rpchat_conn_info_t *p_conn_info,
+                              rplib_tpool_t      *p_tpool,
+                              void (*p_function)(void *p_arg),
+                              void *p_arg)
+{
+    int res = RPLIB_UNSUCCESS;
+    res     = rplib_tpool_enqueue_task(p_tpool, p_function, p_arg);
+    // update counter
+    if (RPLIB_SUCCESS == res)
+    {
+        atomic_fetch_add(&p_conn_info->pending_jobs, 1);
+    }
+
+    return res;
+}
+
+rpchat_conn_queue_t *
+rpchat_conn_queue_create(void)
+{
+    rpchat_conn_queue_t *p_conn_queue = NULL;
+
+    // allocate
+    p_conn_queue = malloc(sizeof(rpchat_conn_queue_t));
+    if (!p_conn_queue)
+    {
+        goto cleanup;
+    }
+
+    // store a "server" identifier for use on server messages
+    p_conn_queue->server_str.len = snprintf(p_conn_queue->server_str.contents,
+                                            RPCHAT_MAX_STR_LENGTH,
+                                            "%s",
+                                            RPCHAT_SERVER_IDENTIFIER);
+
+    // initialize children
+    p_conn_queue->p_conn_ll = rplib_ll_queue_create();
+    if (!p_conn_queue->p_conn_ll)
+    {
+        goto cleanup;
+    }
+    pthread_mutex_init(&(p_conn_queue->mutex_conn_ll), NULL);
+    goto leave;
+cleanup:
+    free(p_conn_queue);
+    p_conn_queue = NULL;
+leave:
+    return p_conn_queue;
 }
 
 int
-rpchat_handle_events(struct epoll_event *p_ret_event_buf,
-                     int                 h_fd_server,
-                     int                 h_fd_epoll,
-                     rplib_tpool_t      *p_tpool,
-                     unsigned int        max_connections,
-                     rplib_ll_queue_t   *p_conn_queue)
+rpchat_conn_queue_destroy(rpchat_conn_queue_t *p_conn_queue)
+{
+    int res = RPLIB_UNSUCCESS;
+
+    pthread_mutex_destroy(&p_conn_queue->mutex_conn_ll);
+    res = rplib_ll_queue_destroy(p_conn_queue->p_conn_ll);
+
+    return res;
+}
+
+int
+rpchat_handle_events(struct epoll_event  *p_ret_event_buf,
+                     int                  h_fd_server,
+                     int                  h_fd_epoll,
+                     rplib_tpool_t       *p_tpool,
+                     unsigned int         max_connections,
+                     rpchat_conn_queue_t *p_conn_queue,
+                     size_t               sz_ret_event_buf)
 {
     int                       res             = RPLIB_UNSUCCESS;
-    int                       h_new_fd        = RPLIB_ERROR;
     unsigned int              event_index     = 0;    // index for event loop
     rpchat_args_proc_event_t *p_new_proc_args = NULL; // args for each event
 
     // iterate over returned events
-    for (event_index = 0; event_index < max_connections; event_index++)
+    for (event_index = 0; event_index < sz_ret_event_buf; event_index++)
     {
         // process new connection
-        if (h_fd_server == p_ret_event_buf[event_index].data.fd
-            && RPLIB_SUCCESS
-                   != rpchat_handle_new_connection(
-                       h_fd_server, h_fd_epoll, p_conn_queue))
+        if (h_fd_server == p_ret_event_buf[event_index].data.fd)
         {
-            res = RPLIB_UNSUCCESS;
-            goto leave;
+            res = rpchat_handle_new_connection(
+                h_fd_server, h_fd_epoll, p_conn_queue);
+            if (RPLIB_SUCCESS != res)
+            {
+                goto leave;
+            }
+            else
+            {
+                continue;
+            }
         }
         // allocate (task args will be freed by callee)
+        p_new_proc_args = NULL;
         p_new_proc_args = malloc(sizeof(rpchat_args_proc_event_t));
         if (!p_new_proc_args)
         {
@@ -166,7 +249,8 @@ rpchat_handle_events(struct epoll_event *p_ret_event_buf,
         p_new_proc_args->sz_msg_buf   = 0;
         p_new_proc_args->p_tpool      = p_tpool;
         p_new_proc_args->p_conn_queue = p_conn_queue;
-        p_new_proc_args->args_type    = RPCHAT_MAX_INCOMING_PKT;
+        p_new_proc_args->p_conn_info  = p_ret_event_buf[event_index].data.ptr;
+        p_new_proc_args->args_type    = RPCHAT_PROC_EVENT_INBOUND;
         // copy over event
         memcpy(&p_new_proc_args->epoll_event,
                &p_ret_event_buf[event_index],
@@ -177,8 +261,13 @@ rpchat_handle_events(struct epoll_event *p_ret_event_buf,
             h_fd_epoll, &p_ret_event_buf[event_index], false);
 
         // send to threadpool
-        rplib_tpool_enqueue_task(
-            p_tpool, rpchat_task_conn_proc_event, p_new_proc_args);
+        res = rpchat_conn_info_enqueue_task(
+            (rpchat_conn_info_t *)p_ret_event_buf[event_index].data.ptr,
+            p_tpool,
+            rpchat_task_conn_proc_event,
+            p_new_proc_args);
+
+        //        rpchat_task_conn_proc_event(p_new_proc_args);
 
         //        // process existing connection
         //        rpchat_handle_existing_connection(h_fd_server,
@@ -186,6 +275,7 @@ rpchat_handle_events(struct epoll_event *p_ret_event_buf,
         //                                          p_conn_queue,
         //                                          &p_ret_event_buf[event_index]);
     }
+    goto leave;
 cleanup:
     free(p_new_proc_args);
     p_new_proc_args = NULL;
@@ -194,9 +284,9 @@ leave:
 }
 
 int
-rpchat_handle_new_connection(unsigned int      h_fd_server,
-                             unsigned int      h_fd_epoll,
-                             rplib_ll_queue_t *p_conn_queue)
+rpchat_handle_new_connection(unsigned int         h_fd_server,
+                             unsigned int         h_fd_epoll,
+                             rpchat_conn_queue_t *p_conn_queue)
 {
     int                    h_new_fd = RPLIB_ERROR;
     int                    res      = RPLIB_ERROR;
@@ -215,19 +305,26 @@ rpchat_handle_new_connection(unsigned int      h_fd_server,
     new_conn_info.h_fd        = h_new_fd;
     new_conn_info.conn_status = RPCHAT_CONN_PRE_REGISTER;
     pthread_mutex_init(&new_conn_info.mutex_conn, NULL);
+    new_conn_info.username.len = 0;
+    new_conn_info.stat_msg.len = 0;
+    atomic_store(&new_conn_info.pending_jobs, 0);
+
     // enqueue new conn info
+    pthread_mutex_lock(&p_conn_queue->mutex_conn_ll);
     p_new_node = rplib_ll_queue_enqueue(
-        p_conn_queue, &new_conn_info, sizeof(rpchat_conn_info_t));
+        p_conn_queue->p_conn_ll, &new_conn_info, sizeof(rpchat_conn_info_t));
     if (!p_new_node)
     {
         goto leave;
     }
+
     // assign
-    new_event.events   = (EPOLLIN | EPOLLERR | EPOLLHUP);
-    new_event.data.ptr = p_new_node;
+    new_event.events   = (EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET);
+    new_event.data.ptr = p_new_node->p_data;
     res = epoll_ctl(h_fd_epoll, EPOLL_CTL_ADD, h_new_fd, &new_event);
 
 leave:
+    pthread_mutex_unlock(&p_conn_queue->mutex_conn_ll);
     return res;
 }
 
@@ -235,11 +332,11 @@ leave:
  * Helper function for `rpchat_task_conn_proc_event`, when an event is
  * 'inbound,' receive the message and take an appropriate action.
  * @param p_task_args Pointer to parent `rpchat_args_proc_event_t` object
- * @return RPLIB_SUCCESS on success; otherwise RPLIB_UNSUCCESS, RPLIB_ERROR on
- * unrecoverable error..
+ * @return RPLIB_SUCCESS on success; otherwise RPLIB_UNSUCCESS, RPLIB_ERROR
+ * on unrecoverable error..
  */
 static int
-rpchat_conn_proc_available_inbound(rpchat_args_proc_event_t *p_task_args)
+rpchat_conn_proc_handle_inbound_msg(rpchat_args_proc_event_t *p_task_args)
 {
     int                 res = RPLIB_UNSUCCESS;
     rpchat_conn_info_t *p_conn_info
@@ -255,46 +352,35 @@ rpchat_conn_proc_available_inbound(rpchat_args_proc_event_t *p_task_args)
         if (p_task_args->epoll_event.events & EPOLLIN)
         {
             // receive message from client
-            p_task_args->sz_msg_buf = rpchat_recvmsg(p_conn_info->h_fd,
-                                                     RPCHAT_MAX_INCOMING_PKT,
-                                                     p_task_args->p_msg_buf);
+            res = rpchat_recvmsg(p_conn_info->h_fd,
+                                 p_task_args->p_msg_buf,
+                                 RPCHAT_MAX_INCOMING_PKT);
             // if no bytes read, leave
-            if (0 == p_task_args->sz_msg_buf)
+            if (0 >= res)
             {
                 // TODO: error
-                res = RPLIB_UNSUCCESS;
+                res = RPLIB_ERROR;
                 goto cleanup;
             }
+            // otherwise, update size
+            p_task_args->sz_msg_buf = res;
         }
-        else if (p_task_args->epoll_event.events & (EPOLLERR))
+        else if (p_task_args->epoll_event.events & (EPOLLERR | EPOLLHUP))
         {
             // TODO: error behavior
-            res = RPLIB_UNSUCCESS;
-        }
-        else if (p_task_args->epoll_event.events & (EPOLLHUP))
-        {
-            // HUP is hang up, connection has closed without being told to,
-            // thus..
             res = RPLIB_ERROR;
+            goto leave;
         }
     }
 
     // handle message appropriately. If message is expected (e.g. conn state
-    // PENDING_STATUS and msg is STATUS, other wise if conn state AVAILABLE)
+    // PENDING_STATUS and msg is STATUS, otherwise if conn state AVAILABLE)
     // then returns RPLIB_SUCCESS
     res = rpchat_handle_msg(p_task_args->p_conn_queue,
                             p_tpool,
                             p_conn_info,
                             p_task_args->p_msg_buf);
-    if (RPLIB_SUCCESS == res)
-    {
-        res = RPLIB_SUCCESS;
-        goto cleanup;
-    }
-    else
-    {
-        goto leave;
-    }
+    goto leave;
 
 cleanup:
     free(p_task_args->p_msg_buf);
@@ -310,42 +396,157 @@ leave:
  * @return RPLIB_SUCCESS on success; otherwise RPLIB_UNSUCCESS
  */
 static int
-rpchat_conn_proc_available_outbound(rpchat_args_proc_event_t *p_task_args)
+rpchat_conn_proc_handle_outbound_msg(rpchat_args_proc_event_t *p_task_args)
 {
     int                 res          = RPLIB_UNSUCCESS;
     rpchat_msg_type_t   new_msg_type = -1;
-    rpchat_conn_info_t *p_conn_info
-        = (rpchat_conn_info_t *)p_task_args->epoll_event.data.ptr;
+    rpchat_conn_info_t *p_conn_info  = p_task_args->p_conn_info;
 
-    // get message type
+    // get message type based on the message stored in buffer
     new_msg_type = rpchat_get_msg_type(p_task_args->p_msg_buf);
 
     // send appropriate message out
     switch (new_msg_type)
     {
         case RPCHAT_BCP_DELIVER:
-            rpchat_send_msg(p_conn_info, p_task_args->p_msg_buf);
+            res = rpchat_submit_msg(
+                p_conn_info, p_task_args->p_msg_buf, p_task_args->sz_msg_buf);
             break;
         case RPCHAT_BCP_STATUS:
-            rpchat_send_msg(p_conn_info, p_task_args->p_msg_buf);
+            res = rpchat_submit_msg(
+                p_conn_info, p_task_args->p_msg_buf, p_task_args->sz_msg_buf);
             break;
         default:
             break;
     }
-leave:
     return res;
 }
 
 /**
- * Helper function for `rpchat_task_conn_proc_event`, when the connection is in
- * an error state. An error status is sent to sender and the connection will be
- * closed.
+ * Helper function for `rpchat_task_conn_proc_event`, when the connection
+ * must send ack message. Copies an OK status message to p_msg buffer in
+ * `rpchat_args_proc_event_t` object
+ * @param p_task_args Pointer to parent `rpchat_args_proc_event_t` object
+ * @return RPLIB_SUCCESS on successful send, RPLIB_ERROR if cannot be sent
+ */
+static int
+rpchat_conn_proc_set_status(rpchat_args_proc_event_t *p_task_args,
+                            rpchat_stat_code_t        status_code)
+{
+    int                 res = RPLIB_UNSUCCESS;
+    rpchat_conn_info_t *p_conn_info
+        = (rpchat_conn_info_t *)p_task_args->epoll_event.data.ptr;
+
+    int bookmark = 0; // to track memcpy
+
+    // asserts
+    assert(NULL != p_task_args->p_msg_buf);
+
+    // assign
+    //    p_conn_info = (rpchat_conn_info_t
+    //    *)p_task_args->epoll_event.data.ptr;
+
+    // copy to args
+    // opcode
+    *(uint8_t *)p_task_args->p_msg_buf = RPCHAT_BCP_STATUS;
+    bookmark += sizeof(uint8_t);
+    // status
+    *(uint8_t *)(p_task_args->p_msg_buf + bookmark) = status_code;
+    bookmark += sizeof(uint8_t);
+    // status msg
+    memcpy(p_task_args->p_msg_buf + bookmark,
+           &p_conn_info->stat_msg,
+           sizeof(p_conn_info->stat_msg.len) + p_conn_info->stat_msg.len);
+    bookmark += sizeof(p_conn_info->stat_msg.len) + p_conn_info->stat_msg.len;
+    p_task_args->sz_msg_buf = bookmark;
+
+    res = RPLIB_SUCCESS;
+
+    return res;
+}
+
+/**
+ * Helper function for `rpchat_task_conn_proc_event`, when the connection
+ * must send a deliver message. Construct a deliver message in the p_msg buffer
+ * within passed `rpchat_args_proc_event_t` object
+ * @param p_task_args Pointer to parent `rpchat_args_proc_event_t` object
+ * @param p_sender Pointer to `rpchat_string_t` containing sender
+ * @param p_msg Pointer to `rpchat_string_t` containing message
+ * @return RPLIB_SUCCESS on successful send, RPLIB_ERROR if cannot be sent
+ */
+static int
+rpchat_conn_proc_set_deliver(rpchat_args_proc_event_t *p_task_args,
+                             rpchat_string_t          *p_sender,
+                             rpchat_string_t          *p_msg)
+{
+    int             res       = RPLIB_UNSUCCESS;
+    int             buf_index = 0;
+    rpchat_string_t sanitized_msg;
+
+    rpchat_string_sanitize(p_msg, &sanitized_msg, true);
+
+    buf_index = 0;
+    // opcode field
+    *p_task_args->p_msg_buf = RPCHAT_BCP_DELIVER;
+    buf_index += sizeof(uint8_t);
+    // from field (len)
+    memcpy(p_task_args->p_msg_buf + buf_index,
+           &p_sender->len,
+           sizeof(p_sender->len));
+    // big endian
+    *(uint16_t *)(p_task_args->p_msg_buf + buf_index) = htobe16(p_sender->len);
+    buf_index += sizeof(p_sender->len);
+    // from field (contents)
+    memcpy(
+        p_task_args->p_msg_buf + buf_index, &p_sender->contents, p_sender->len);
+    buf_index += p_sender->len;
+    // msg field (len)
+    memcpy(p_task_args->p_msg_buf + buf_index,
+           &sanitized_msg.len,
+           sizeof(sanitized_msg.len));
+    // big endian
+    *(uint16_t *)(p_task_args->p_msg_buf + buf_index)
+        = htobe16(sanitized_msg.len);
+    buf_index += sizeof(sanitized_msg.len);
+    // msg field (contents)
+    memcpy(p_task_args->p_msg_buf + buf_index,
+           &sanitized_msg.contents,
+           sanitized_msg.len);
+    buf_index += sanitized_msg.len;
+    // update size
+    p_task_args->sz_msg_buf = buf_index;
+    res                     = RPLIB_SUCCESS;
+
+    return res;
+}
+
+/**
+ * Helper function for `rpchat_task_conn_proc_event`, when the connection is
+ * in an error state. An error status is sent to sender and the connection
+ * is closed.
  * @param p_task_args Pointer to parent `rpchat_args_proc_event_t` object
  * @return RPLIB_SUCCESS on no issues; otherwise, RPLIB_UNSUCCESS
  */
 static int
 rpchat_conn_proc_error(rpchat_args_proc_event_t *p_task_args)
 {
+    int                 res         = RPLIB_UNSUCCESS;
+    rpchat_conn_info_t *p_conn_info = NULL;
+
+    p_conn_info = (rpchat_conn_info_t *)p_task_args->epoll_event.data.ptr;
+
+    // set message
+    rpchat_conn_proc_set_status(p_task_args, RPCHAT_BCP_STATUS_ERROR);
+
+    // attempt to send status
+    rpchat_submit_msg(
+        p_conn_info, p_task_args->p_msg_buf, p_task_args->sz_msg_buf);
+
+    // stop listening and close socket(s)
+    res = rpchat_close_connection(p_task_args->h_fd_epoll, p_conn_info->h_fd);
+
+    // get out
+    return res;
 }
 
 void
@@ -354,22 +555,32 @@ rpchat_task_conn_proc_event(void *p_args)
     rpchat_args_proc_event_t *p_task_args = NULL;
     rpchat_conn_info_t       *p_conn_info = NULL;
     rplib_tpool_t            *p_tpool     = NULL;
-    int                       res         = RPLIB_UNSUCCESS;
+    int                       res         = RPLIB_SUCCESS;
     // cast args to access fields
     p_task_args = (rpchat_args_proc_event_t *)p_args;
-    p_conn_info = (rpchat_conn_info_t *)p_task_args->epoll_event.data.ptr;
+    p_conn_info = (rpchat_conn_info_t *)p_task_args->p_conn_info;
     p_tpool     = p_task_args->p_tpool;
+
+    // if conn object destroyed, leave
+    if (NULL == p_task_args->epoll_event.data.ptr)
+    {
+        goto leave;
+    }
 
     // attempt lock, otherwise requeue
     if (0 > pthread_mutex_trylock(&p_conn_info->mutex_conn))
     {
-        goto requeue;
+        goto requeue_no_unlock;
     }
+
+    // update queue on conn info
+    atomic_fetch_sub(&p_conn_info->pending_jobs, 1);
 
     // if buffer is not allocated, allocate
     if (NULL == p_task_args->p_msg_buf)
     {
-        // freed when args object is freed completion of task (on n iteration)
+        // freed when args object is freed completion of task (on n
+        // iteration)
         p_task_args->p_msg_buf = malloc(RPCHAT_MAX_INCOMING_PKT);
         if (NULL == p_task_args->p_msg_buf)
         {
@@ -381,33 +592,88 @@ rpchat_task_conn_proc_event(void *p_args)
 
     switch (p_conn_info->conn_status)
     {
-        case RPCHAT_CONN_AVAILABLE || RPCHAT_CONN_PRE_REGISTER:
+        case RPCHAT_CONN_PRE_REGISTER:
+            // drop down
+        case RPCHAT_CONN_AVAILABLE:
             if (RPCHAT_PROC_EVENT_INBOUND == p_task_args->args_type)
             {
-                // handle inbound messages (register, status, send)
-                res = rpchat_conn_proc_available_inbound(p_task_args);
+                // handle messages inbound from client (register, status,
+                // send)
+                res = rpchat_conn_proc_handle_inbound_msg(p_task_args);
+
+                // on success, requeue to send status
+                if (RPLIB_SUCCESS == res)
+                {
+                    p_conn_info->conn_status = RPCHAT_CONN_SEND_MSG;
+                    p_task_args->args_type   = RPCHAT_PROC_EVENT_OUTBOUND;
+                    rpchat_conn_proc_set_status(p_task_args,
+                                                RPCHAT_BCP_STATUS_GOOD);
+                    goto requeue;
+                }
+                // on unsuccess, kill connection TODO: is this overkill?
+                else
+                {
+                    res = RPLIB_ERROR;
+                    break;
+                }
             }
+            // if AVAILABLE and event is OUTBOUND, state change and requeue
+            // to process on next pass
             else
             {
-                // handle outbound messages (deliver, status)
-                res = rpchat_conn_proc_available_outbound(p_task_args);
+                p_conn_info->conn_status = RPCHAT_CONN_SEND_MSG;
+                goto requeue;
+            }
+        case RPCHAT_CONN_SEND_MSG:
+            // sending outbound message (deliver, status)
+            // if event is not outbound, requeue
+            if (RPCHAT_PROC_EVENT_OUTBOUND != p_task_args->args_type)
+            {
+                goto requeue;
+            }
+            // if message is outbound, send it to client
+            else
+            {
+                res = rpchat_conn_proc_handle_outbound_msg(p_task_args);
+                // change state if msg was sent
+                if (RPLIB_SUCCESS == res)
+                {
+                    if (RPCHAT_BCP_STATUS
+                        == rpchat_get_msg_type(p_task_args->p_msg_buf))
+                    {
+                        p_conn_info->conn_status = RPCHAT_CONN_AVAILABLE;
+                    }
+                    // if a non-status message sent, wait for status
+                    else
+                    {
+                        p_conn_info->conn_status = RPCHAT_CONN_PENDING_STATUS;
+                    }
+                    // start listening
+                    rpchat_toggle_descriptor(p_task_args->h_fd_epoll,
+                                             &p_task_args->epoll_event,
+                                             true);
+                }
             }
             break;
         case RPCHAT_CONN_PENDING_STATUS:
-            // if not inbound, requeue
+            // if not inbound, requeue. Need a STATUS before sending
+            // anything.
             if (RPCHAT_PROC_EVENT_INBOUND != p_task_args->args_type)
             {
                 goto requeue;
             }
-            // if right direction, try to process message
+            // if message inbound from client, try to process message
             else
             {
-                res = rpchat_conn_proc_available_inbound(p_task_args);
-                // if not successful status processing, drop msg and
-                // don't requeue
-                if (RPLIB_SUCCESS != res)
+                // call will return RPLIB_UNSUCCESS if current state is
+                // PENDING_STATUS and message is not of type STATUS
+                res = rpchat_conn_proc_handle_inbound_msg(p_task_args);
+                // UNSUCCESS will 'drop' event in `cleanup`
+                // if error, set error state and requeue to handle
+                if (RPLIB_ERROR == res)
                 {
-                    goto cleanup;
+                    p_conn_info->conn_status = RPCHAT_CONN_ERR;
+                    goto requeue;
                 }
                 // success; reset to available
                 p_conn_info->conn_status = RPCHAT_CONN_AVAILABLE;
@@ -418,10 +684,17 @@ rpchat_task_conn_proc_event(void *p_args)
             break;
         case RPCHAT_CONN_ERR:
             // error occurred, send message and begin closing
-            break;
-        case RPCHAT_CONN_CLOSED:
-            // connection is closed, skip
-            break;
+            rpchat_conn_proc_error(p_args);
+            p_conn_info->conn_status = RPCHAT_CONN_CLOSING;
+            goto requeue;
+        case RPCHAT_CONN_CLOSING:
+            // connection is closing...waiting for final out
+            if (0 == atomic_load(&p_conn_info->pending_jobs))
+            {
+                rpchat_conn_info_destroy(
+                    p_conn_info, p_task_args->p_conn_queue, p_tpool);
+                goto cleanup_no_unlock;
+            }
         default:
             break;
     }
@@ -429,85 +702,73 @@ rpchat_task_conn_proc_event(void *p_args)
     if (RPLIB_ERROR == res)
     {
         p_conn_info->conn_status = RPCHAT_CONN_ERR;
+        goto requeue;
     }
-    pthread_mutex_unlock(&p_conn_info->mutex_conn);
 cleanup:
+    pthread_mutex_unlock(&p_conn_info->mutex_conn);
+cleanup_no_unlock:
     free(p_task_args->p_msg_buf);
     p_task_args->p_msg_buf = NULL;
     free(p_args);
     goto leave;
 requeue:
-    rplib_tpool_enqueue_task(p_tpool, rpchat_task_conn_proc_event, p_args);
+    pthread_mutex_unlock(&p_conn_info->mutex_conn);
+requeue_no_unlock:
+    rpchat_conn_info_enqueue_task(
+        p_conn_info, p_tpool, rpchat_task_conn_proc_event, p_args);
 leave:
     return;
 }
 
 int
-rpchat_handle_existing_connection(unsigned int        h_fd_server,
-                                  unsigned int        h_fd_epoll,
-                                  rplib_ll_queue_t   *p_conn_queue,
-                                  struct epoll_event *p_new_event)
+rpchat_conn_info_destroy(rpchat_conn_info_t  *p_conn_info,
+                         rpchat_conn_queue_t *p_conn_queue,
+                         rplib_tpool_t       *p_tpool)
 {
-    int                 res       = RPLIB_UNSUCCESS;
-    char               *p_msg_buf = NULL;
-    rpchat_conn_info_t *p_current_conn_info;
+    int                    res        = RPLIB_UNSUCCESS;
+    rplib_ll_queue_node_t *p_tgt_node = p_conn_queue->p_conn_ll->p_front;
+    rpchat_string_t        dc_msg;
 
-    p_current_conn_info = (rpchat_conn_info_t *)p_new_event->data.ptr;
+    // notify
+    dc_msg.len = snprintf(dc_msg.contents,
+                          RPCHAT_MAX_STR_LENGTH,
+                          "%s has left the server.",
+                          (0 < p_conn_info->username.len)
+                              ? p_conn_info->username.contents
+                              : "A user");
+    rpchat_broadcast_msg(
+        p_conn_info, &p_conn_queue->server_str, p_conn_queue, p_tpool, &dc_msg);
 
-    // POLLIN = wants to give data
-    // POLLERR = has problem
-    // POLLHUP = they gone
-    if (p_new_event->events & EPOLLIN)
+    // destroy mutex
+    pthread_mutex_unlock(&p_conn_info->mutex_conn);
+    pthread_mutex_destroy(&p_conn_info->mutex_conn);
+
+    // delete object
+    pthread_mutex_lock(&p_conn_queue->mutex_conn_ll);
+    while (NULL != p_tgt_node)
     {
-        // create buffer for received message
-        p_msg_buf = malloc(RPCHAT_MAX_INCOMING_PKT);
-        if (NULL == p_msg_buf)
+        // if match with address, remove
+        if (p_tgt_node->p_data == p_conn_info)
         {
-            perror("malloc");
-            res = RPLIB_ERROR;
-            goto cleanup;
+            // remove
+            rplib_ll_remove_node(p_conn_queue->p_conn_ll, p_tgt_node);
+            res = RPLIB_SUCCESS;
+            goto leave;
         }
+        p_tgt_node = p_tgt_node->p_next_node;
+    }
 
-        // receive message from client
-        res = rpchat_recvmsg(
-            p_current_conn_info->h_fd, RPCHAT_MAX_INCOMING_PKT, p_msg_buf);
-        if (RPLIB_SUCCESS != res)
-        {
-            goto cleanup;
-        }
-
-        // handle message appropriately
-        //        rpchat_handle_msg(p_conn_queue, p_current_conn_info,
-        //        p_msg_buf);
-    }
-    else if (p_new_event->events & EPOLLHUP)
-    {
-    }
-    else if (p_new_event->events & EPOLLERR)
-    {
-        res = RPLIB_ERROR;
-    }
-cleanup:
-    free(p_msg_buf);
-    p_msg_buf = NULL;
 leave:
+    pthread_mutex_unlock(&p_conn_queue->mutex_conn_ll);
     return res;
-}
-
-int
-rpchat_close_connection(rplib_ll_queue_t  *p_conn_queue,
-                        rpchat_conn_info_t p_conn_info,
-                        unsigned int       h_fd_epoll)
-{
-    int res = RPLIB_UNSUCCESS;
 }
 
 rpchat_msg_type_t
 rpchat_get_msg_type(char *p_msg_buf)
 {
-    int     res    = RPLIB_UNSUCCESS;
-    uint8_t opcode = *p_msg_buf;
-    switch (opcode)
+    int   res    = RPLIB_UNSUCCESS;
+    char *opcode = p_msg_buf;
+    switch (*opcode)
     {
         case 1:
             res = RPCHAT_BCP_REGISTER;
@@ -529,17 +790,30 @@ rpchat_get_msg_type(char *p_msg_buf)
 }
 
 int
-rpchat_send_msg(rpchat_conn_info_t *p_sender_info, char *p_msg_buf)
+rpchat_submit_msg(rpchat_conn_info_t *p_sender_info,
+                  char               *p_msg_buf,
+                  size_t              sz_msg_buf)
 {
-    // TODO make call to networking here
-    return 0;
+    int res = RPLIB_UNSUCCESS;
+
+    // send message
+    res = 0 > rpchat_sendmsg(p_sender_info->h_fd, p_msg_buf, sz_msg_buf)
+              ? RPLIB_UNSUCCESS
+              : RPLIB_SUCCESS;
+    // if sendmsg fails, set error state
+    if (RPLIB_UNSUCCESS == res)
+    {
+        p_sender_info->conn_status = RPCHAT_CONN_ERR;
+    }
+
+    return res;
 }
 
 int
-rpchat_handle_msg(rplib_ll_queue_t   *p_conn_queue,
-                  rplib_tpool_t      *p_tpool,
-                  rpchat_conn_info_t *p_conn_info,
-                  char               *p_msg_buf)
+rpchat_handle_msg(rpchat_conn_queue_t *p_conn_queue,
+                  rplib_tpool_t       *p_tpool,
+                  rpchat_conn_info_t  *p_conn_info,
+                  char                *p_msg_buf)
 {
     int res = RPLIB_UNSUCCESS;
 
@@ -569,25 +843,24 @@ rpchat_handle_msg(rplib_ll_queue_t   *p_conn_queue,
             res = RPLIB_ERROR;
             break;
     }
-    // TODO: send neg status on failure to handle
-
-leave:
+    // TODO: send neg status on failure to handlE
     return res;
 }
 
 rpchat_conn_info_t *
-rpchat_find_by_username(rplib_ll_queue_t *p_conn_queue,
-                        rpchat_string_t  *p_tgt_username)
+rpchat_find_by_username(rpchat_conn_queue_t *p_conn_queue,
+                        rpchat_string_t     *p_tgt_username)
 {
     rpchat_conn_info_t    *p_found_info = NULL; // result
     size_t                 conn_index   = 0;    // index for conn loop
     size_t                 cmp_size     = 0;    // strncmp size per iteration
-    int                    cmp_res      = 0;    // strncmp result
     rplib_ll_queue_node_t *p_tgt_node   = NULL; // current node for conn loop
     rpchat_conn_info_t    *p_tgt_info   = NULL; // current info for conn loop
 
-    p_tgt_node = p_conn_queue->p_front;
-    for (conn_index; conn_index < p_conn_queue->size; conn_index++)
+    pthread_mutex_lock(&p_conn_queue->mutex_conn_ll);
+    p_tgt_node = p_conn_queue->p_conn_ll->p_front;
+    for (conn_index = 0; conn_index < p_conn_queue->p_conn_ll->size;
+         conn_index++)
     {
         p_tgt_info = ((rpchat_conn_info_t *)p_tgt_node->p_data);
         // if lengths are not the same, cannot be same username
@@ -608,6 +881,7 @@ rpchat_find_by_username(rplib_ll_queue_t *p_conn_queue,
     }
 
 leave:
+    pthread_mutex_unlock(&p_conn_queue->mutex_conn_ll);
     return p_found_info;
 }
 
@@ -619,7 +893,7 @@ leave:
  * otherwise, only match printable ascii (excl. space)
  * @return RPLIB_SUCCESS if no issues; otherwise, RPLIB_UNSUCCESS
  */
-static int
+int
 rpchat_string_sanitize(rpchat_string_t *p_input_string,
                        rpchat_string_t *p_output_string,
                        bool             b_allow_ctrl)
@@ -629,9 +903,10 @@ rpchat_string_sanitize(rpchat_string_t *p_input_string,
     size_t loop_index        = 0;
     char   curr_char         = 0;
     // double check lengths compliant
-    p_input_string->len = p_input_string->len < RPCHAT_MAX_STR_LENGTH
-                              ? p_input_string->len
-                              : RPCHAT_MAX_STR_LENGTH;
+    p_input_string->len  = p_input_string->len < RPCHAT_MAX_STR_LENGTH
+                               ? p_input_string->len
+                               : RPCHAT_MAX_STR_LENGTH;
+    p_output_string->len = 0;
     // ensure output clean
     memset(p_output_string, 0, p_output_string->len);
     for (loop_index = 0; loop_index < p_input_string->len; loop_index++)
@@ -649,21 +924,26 @@ rpchat_string_sanitize(rpchat_string_t *p_input_string,
             curr_output_index++;
         }
     }
-    // null-terminate
-    p_output_string->contents[curr_output_index] = '\0';
-    // adjust length
-    p_output_string->len = curr_output_index + 1;
+    // null-terminate if not already
+    if (curr_output_index > 0
+        && '\0' != p_output_string->contents[curr_output_index - 1])
+    {
+        p_output_string->contents[curr_output_index] = '\0';
+        curr_output_index += 1;
+    }
+    // set length
+    p_output_string->len = curr_output_index;
     // return unsuccess if string of length 1 (just terminator)
-    res = p_output_string->len > 1 ? RPLIB_SUCCESS : RPLIB_UNSUCCESS;
+    res = p_output_string->len > 0 ? RPLIB_SUCCESS : RPLIB_UNSUCCESS;
 
     return res;
 }
 
 int
-rpchat_handle_register(rplib_ll_queue_t   *p_conn_queue,
-                       rplib_tpool_t      *p_tpool,
-                       rpchat_conn_info_t *p_conn_info,
-                       char               *p_msg_buf)
+rpchat_handle_register(rpchat_conn_queue_t *p_conn_queue,
+                       rplib_tpool_t       *p_tpool,
+                       rpchat_conn_info_t  *p_conn_info,
+                       char                *p_msg_buf)
 {
     int                    res        = RPLIB_UNSUCCESS;
     rpchat_pkt_register_t *p_reg_info = NULL;  // msg storage
@@ -688,8 +968,8 @@ rpchat_handle_register(rplib_ll_queue_t   *p_conn_queue,
     {
         goto leave;
     }
-    // check for existing username
-    if (NULL == rpchat_find_by_username(p_conn_queue, &sanitized_username))
+    // check for existing username. Want NULL
+    if (NULL != rpchat_find_by_username(p_conn_queue, &sanitized_username))
     {
         res = RPLIB_UNSUCCESS;
         goto leave;
@@ -708,9 +988,9 @@ rpchat_handle_register(rplib_ll_queue_t   *p_conn_queue,
     {
         goto leave;
     }
-    // make big endian
-    reg_msg.len = htobe16(reg_msg.len);
-    rpchat_broadcast_msg(p_conn_info, p_conn_queue, p_tpool, &reg_msg);
+
+    // send to all
+    rpchat_broadcast_msg(p_conn_info, &p_conn_queue->server_str, p_conn_queue, p_tpool, &reg_msg);
     // success
     res = RPLIB_SUCCESS;
 leave:
@@ -718,10 +998,10 @@ leave:
 }
 
 int
-rpchat_handle_send(rplib_ll_queue_t   *p_conn_queue,
-                   rplib_tpool_t      *p_tpool,
-                   rpchat_conn_info_t *p_sender_info,
-                   char               *p_msg_buf)
+rpchat_handle_send(rpchat_conn_queue_t *p_conn_queue,
+                   rplib_tpool_t       *p_tpool,
+                   rpchat_conn_info_t  *p_sender_info,
+                   char                *p_msg_buf)
 {
     int             res = RPLIB_UNSUCCESS;
     rpchat_string_t curr_msg;
@@ -730,10 +1010,12 @@ rpchat_handle_send(rplib_ll_queue_t   *p_conn_queue,
     memcpy(&curr_msg,
            &((rpchat_pkt_send_t *)p_msg_buf)->message,
            sizeof(rpchat_string_t));
-    // adjust
+    // handle endianness
     curr_msg.len = be16toh(curr_msg.len);
+
     // send to all
-    rpchat_broadcast_msg(p_sender_info, p_conn_queue, p_tpool, &curr_msg);
+    res = rpchat_broadcast_msg(
+        p_sender_info, &p_conn_queue->server_str, p_conn_queue, p_tpool, &curr_msg);
 
     return res;
 }
@@ -768,26 +1050,45 @@ leave:
 }
 
 int
-rpchat_broadcast_msg(rpchat_conn_info_t *p_conn_info,
-                     rplib_ll_queue_t   *p_conn_queue,
-                     rplib_tpool_t      *p_tpool,
-                     rpchat_string_t    *p_msg)
+rpchat_broadcast_msg(rpchat_conn_info_t  *p_sender_info,
+                     rpchat_string_t     *p_sender_str,
+                     rpchat_conn_queue_t *p_conn_queue,
+                     rplib_tpool_t       *p_tpool,
+                     rpchat_string_t     *p_msg)
 {
     int                       res = RPLIB_UNSUCCESS;
     rpchat_string_t           sanitized_msg;
     rplib_ll_queue_node_t    *p_current_node    = NULL;
+    rpchat_conn_info_t       *p_current_info    = NULL;
     rpchat_args_proc_event_t *p_proc_event_args = NULL;
-    rpchat_pkt_deliver_t     *p_new_deliver_msg;
+    size_t                    buf_index = 0; // for copying values to buffer
 
     // sanitize
     rpchat_string_sanitize(p_msg, &sanitized_msg, true);
 
+    // if no passed username, use the calling conn_info username
+    if (!p_sender_str)
+    {
+        p_sender_str = &p_sender_info->username;
+    }
+
+    // logging
+    printf("%s: %s\n", p_sender_str->contents, sanitized_msg.contents);
+
     // create broadcasts
-    p_current_node = p_conn_queue->p_front;
+    pthread_mutex_lock(&p_conn_queue->mutex_conn_ll);
+    p_current_node = p_conn_queue->p_conn_ll->p_front;
     while (NULL != p_current_node)
     {
-        if (p_conn_info != p_current_node->p_data)
+        if (p_sender_info != p_current_node->p_data)
         {
+            p_current_info = (rpchat_conn_info_t *)p_current_node->p_data;
+            // if closing or in error state, skip
+            if (RPCHAT_CONN_CLOSING == p_current_info->conn_status
+                || RPCHAT_CONN_ERR == p_current_info->conn_status)
+            {
+                continue;
+            }
             // allocate
             p_proc_event_args = malloc(sizeof(rpchat_args_proc_event_t));
             if (NULL == p_proc_event_args)
@@ -801,38 +1102,36 @@ rpchat_broadcast_msg(rpchat_conn_info_t *p_conn_info,
                 res = RPLIB_ERROR;
                 goto cleanup;
             }
-            p_new_deliver_msg
-                = (rpchat_pkt_deliver_t *)p_proc_event_args->p_msg_buf;
+
             // set fields
-            p_proc_event_args->sz_msg_buf   = 0;
+            p_proc_event_args->sz_msg_buf   = sizeof(rpchat_pkt_deliver_t);
             p_proc_event_args->args_type    = RPCHAT_PROC_EVENT_OUTBOUND;
             p_proc_event_args->p_conn_queue = p_conn_queue;
+            p_proc_event_args->p_conn_info  = p_current_info;
             p_proc_event_args->p_tpool      = p_tpool;
-            // copy fields
-            p_new_deliver_msg->opcode = RPCHAT_BCP_DELIVER;
-            memcpy(&p_new_deliver_msg->from,
-                   &p_conn_info->username,
-                   sizeof(rpchat_string_t));
-            memcpy(&p_new_deliver_msg->message,
-                   &sanitized_msg,
-                   sizeof(rpchat_string_t));
-            // big endian for transit
-            p_new_deliver_msg->message.len
-                = htobe16(p_new_deliver_msg->message.len);
-            p_new_deliver_msg->from.len = htobe16(p_new_deliver_msg->from.len);
+            // create deliver msg in new proc_events
+            rpchat_conn_proc_set_deliver(
+                p_proc_event_args, p_sender_str, p_msg);
             // enqueue
-            rplib_tpool_enqueue_task(
-                p_tpool, rpchat_task_conn_proc_event, p_proc_event_args);
+            rpchat_conn_info_enqueue_task(p_current_info,
+                                          p_tpool,
+                                          rpchat_task_conn_proc_event,
+                                          p_proc_event_args);
         }
 
         p_current_node = p_current_node->p_next_node;
     }
+    res = RPLIB_SUCCESS;
     goto leave;
 cleanup:
-    free(p_proc_event_args->p_msg_buf);
-    p_proc_event_args->p_msg_buf = NULL;
+    if (NULL != p_proc_event_args)
+    {
+        free(p_proc_event_args->p_msg_buf);
+        p_proc_event_args->p_msg_buf = NULL;
+    }
     free(p_proc_event_args);
     p_proc_event_args = NULL;
 leave:
+    pthread_mutex_unlock(&p_conn_queue->mutex_conn_ll);
     return res;
 }
