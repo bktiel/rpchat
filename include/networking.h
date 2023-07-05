@@ -63,7 +63,7 @@ rpchat_close_connection(int h_fd_epoll, int h_fd);
  * @param p_buf Pointer to buffer in which to place message
  * @return Bytes read, RPLIB_ERROR on error
  */
-int rpchat_recvmsg(int h_fd_client, char *p_buf, size_t len);
+int rpchat_recv(int h_fd_client, char *p_buf, size_t len);
 
 /**
  * Send a message to a given client

@@ -213,7 +213,7 @@ leave:
 }
 
 int
-rpchat_recvmsg(int h_fd_client, char *p_buf, size_t len)
+rpchat_recv(int h_fd_client, char *p_buf, size_t len)
 {
     ssize_t read_bytes = 0;
 

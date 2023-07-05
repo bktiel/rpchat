@@ -58,8 +58,9 @@ rplib_ll_queue_enqueue(rplib_ll_queue_t *p_queue,
         goto cleanup;
     }
     // set fields on node
-    p_node->p_data    = p_buf;
-    p_node->data_size = data_size;
+    p_node->p_data      = p_buf;
+    p_node->data_size   = data_size;
+    p_node->p_next_node = NULL;
     // update list
     // safely change size
     if (p_queue->size + 1 < INT_MAX)

@@ -16,10 +16,10 @@
 
 #define RPCHAT_DEFAULT_PORT         9001
 #define RPCHAT_DEFAULT_LOG          'stdout'
-#define RPCHAT_SERVER_IDENTIFIER "Server"
+#define RPCHAT_SERVER_IDENTIFIER    "[Server]"
 #define RPCHAT_MAX_STR_LENGTH       4095
 #define RPCHAT_MAX_INCOMING_PKT     4111
-#define RPCHAT_NUM_THREADS          1
+#define RPCHAT_NUM_THREADS          4
 #define RPCHAT_FILTER_ASCII_START   33
 #define RPCHAT_FILTER_ASCII_SPACE   32
 #define RPCHAT_FILTER_ASCII_NEWLINE 10
@@ -44,6 +44,7 @@ typedef enum rpchat_connection_status
 {
     RPCHAT_CONN_PRE_REGISTER,
     RPCHAT_CONN_AVAILABLE,      // connection is available to receive data
+    RPCHAT_CONN_SEND_STAT,       // send a message outbound
     RPCHAT_CONN_SEND_MSG,       // send a message outbound
     RPCHAT_CONN_PENDING_STATUS, // data sent, awaiting status response
     RPCHAT_CONN_ERR,            // error state
@@ -56,18 +57,25 @@ typedef struct rpchat_basic_chat_string
     char      contents[RPCHAT_MAX_STR_LENGTH];
 } rpchat_string_t;
 
+int rpchat_basic_chat_string_clear(rpchat_string_t *p_string);
+
+/**
+ * Conn_Queue holds a linked list of all conn_info objects, a mutex for it, as
+ * well as globals for the lifetime of the BCP server session
+ */
 typedef struct
 {
-    rplib_ll_queue_t *p_conn_ll;
-    rpchat_string_t   server_str;
-    pthread_mutex_t   mutex_conn_ll;
+    rplib_ll_queue_t *p_conn_ll;     // linked list of conn_info objects
+    pthread_mutex_t   mutex_conn_ll; // mutex for linked list
+    int               h_fd_epoll;    // File descriptor of epoll server
+    rpchat_string_t   server_str;    // String that server will use in messages
 } rpchat_conn_queue_t;
 
 /**
  * Create a rpchat_conn_queue object
  * @return Pointer to object in heap on success, NULL on failure
  */
-rpchat_conn_queue_t *rpchat_conn_queue_create(void);
+rpchat_conn_queue_t *rpchat_conn_queue_create(int h_fd_epoll);
 
 /**
  * Destroy an rpchat_conn_queue object
@@ -91,16 +99,15 @@ typedef struct rpchat_connection_info
 
 typedef enum
 {
-    RPCHAT_PROC_EVENT_INBOUND,
-    RPCHAT_PROC_EVENT_OUTBOUND
+    RPCHAT_PROC_EVENT_INBOUND, // event is INBOUND to server (status, send, etc)
+    RPCHAT_PROC_EVENT_OUTBOUND // event is OUTBOUND to clients (e.g. deliver)
 } rpchat_args_proc_event_src_t;
 
 typedef struct
 {
-    rpchat_args_proc_event_src_t args_type; // Whether 'event' is inbound
-    int                  h_fd_epoll;  // file descriptor for epoll instance
-    struct epoll_event   epoll_event; // Event to process
-    rplib_tpool_t       *p_tpool;     // Pointer to threadpool
+    rpchat_args_proc_event_src_t args_type;   // Whether 'event' is inbound
+    struct epoll_event           epoll_event; // Event to process
+    rplib_tpool_t               *p_tpool;     // Pointer to threadpool
     rpchat_conn_info_t  *p_conn_info; // Pointer to related `rpchat_conn_info_t`
     rpchat_conn_queue_t *p_conn_queue; // Queue of `rpchat_conn_info_t`
     char                *p_msg_buf;    // Pointer to msg buffer
@@ -172,7 +179,6 @@ int rpchat_handle_events(struct epoll_event  *p_ret_event_buf,
                          int                  h_fd_server,
                          int                  h_fd_epoll,
                          rplib_tpool_t       *p_tpool,
-                         unsigned int         max_connections,
                          rpchat_conn_queue_t *p_conn_queue,
                          size_t               sz_ret_event_buf);
 
@@ -241,7 +247,7 @@ int rpchat_handle_register(rpchat_conn_queue_t *p_conn_queue,
  * connected (except sender)
  * @param p_sender_info Pointer to sender connection info
  * @param p_msg_buf Pointer to buffer containing message sent
- * @return RP_SUCCESS on no issues, RP_UNSUCCESS on send failure
+ * @return RP_SUCCESS on no issues, RPLIB_UNSUCCESS on processing failure
  */
 int rpchat_handle_send(rpchat_conn_queue_t *p_conn_queue,
                        rplib_tpool_t       *p_tpool,
