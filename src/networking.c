@@ -23,7 +23,8 @@
 int
 rpchat_begin_networking(unsigned int port_num,
                         int         *p_h_fd_server,
-                        int         *p_h_fd_epoll)
+                        int         *p_h_fd_epoll,
+                        int         *p_h_fd_signal)
 {
     int res           = RPLIB_ERROR; // default failure in case of early term
     int h_fd_epoll    = -1;          // fd that describes epoll
@@ -56,6 +57,15 @@ rpchat_begin_networking(unsigned int port_num,
         goto leave;
     }
 
+    // tell epoll to watch signal socket
+    event_server.events  = EPOLLIN;
+    event_server.data.fd = *p_h_fd_signal; // fd stands in place of pointer here
+    if (0 > epoll_ctl(h_fd_epoll, EPOLL_CTL_ADD, *p_h_fd_signal, &event_server))
+    {
+        perror("server socket");
+        goto leave;
+    }
+
     // set server and epoll FDs
     *p_h_fd_server = h_sock_server;
     *p_h_fd_epoll  = h_fd_epoll;
@@ -65,6 +75,14 @@ rpchat_begin_networking(unsigned int port_num,
 
 leave:
     return res;
+}
+
+void
+rpchat_stop_networking(int h_fd_epoll, int h_fd_server, int h_fd_signal)
+{
+    close(h_fd_signal);
+    close(h_fd_signal);
+    close(h_fd_epoll);
 }
 
 int

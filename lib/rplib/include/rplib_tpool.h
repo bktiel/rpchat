@@ -23,11 +23,13 @@ typedef struct
     pthread_t        *p_thread_buf;      // storage for threads
     size_t            num_threads;       // number of threads to use
     volatile size_t   num_threads_busy;  // number of active threads
+    volatile size_t   num_threads_alive; // number of active threads
     pthread_mutex_t   mutex_task_queue;  // lock for job queue
     pthread_mutex_t   mutex_thrd_count;  // lock for thread metrics
     pthread_cond_t    cond_task_queue;   // used to signal threads about jobs
     pthread_cond_t    cond_threads_idle; // used to signal all threads idle
-    atomic_bool       b_shutdown;        // trigger for shutdown
+    atomic_bool       b_terminate;       // trigger for shutdown
+
 } rplib_tpool_t;
 
 typedef struct

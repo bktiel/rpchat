@@ -1,15 +1,3 @@
-#include "basic_chat.h"
-
-#include <assert.h>
-#include <malloc.h>
-#include <stdbool.h>
-#include <string.h>
-
-#include "endian.h"
-#include "networking.h"
-#include "rplib_common.h"
-#include "rplib_tpool.h"
-
 /** @file basic_chat.c
  *
  * @brief Implements definitions specific to provided basic chat protocol
@@ -18,19 +6,50 @@
  * COPYRIGHT NOTICE: None
  */
 
+#include "basic_chat.h"
+
+#include <assert.h>
+#include <malloc.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <string.h>
+#include <sys/signalfd.h>
+
+#include "endian.h"
+#include "networking.h"
+#include "rplib_common.h"
+#include "rplib_tpool.h"
+
 int
 rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
 {
-    int                  res             = RPLIB_UNSUCCESS; // assume failure
-    int                  h_fd_server     = RPLIB_ERROR;     // server socket fd
-    int                  h_fd_epoll      = RPLIB_ERROR;     // epoll instance fd
-    int                  loop_res        = RPLIB_SUCCESS;   // default success
-    rplib_tpool_t       *p_tpool         = NULL;            // threadpool
-    rpchat_conn_queue_t *p_conn_queue    = NULL; // queue for connections
-    struct epoll_event  *p_ret_event_buf = NULL; // buffer for events
+    int                  res         = RPLIB_UNSUCCESS; // assume failure
+    int                  h_fd_server = RPLIB_ERROR;     // server socket fd
+    int                  h_fd_epoll  = RPLIB_ERROR;     // epoll instance fd
+    int                  h_fd_signal = RPLIB_ERROR;
+    int                  loop_res    = RPLIB_SUCCESS;   // default success
+    sigset_t             sigset;
+    rplib_tpool_t       *p_tpool         = NULL;        // threadpool
+    rpchat_conn_queue_t *p_conn_queue    = NULL;        // queue for connections
+    struct epoll_event  *p_ret_event_buf = NULL;        // buffer for events
+
+    // create sigset to assign to sigmask
+    res = sigemptyset(&sigset);
+    assert(res == 0);
+    res = sigaddset(&sigset, SIGINT);
+    assert(res == 0);
+
+    // set sigmask to receive desired signals
+    res = sigprocmask(SIG_BLOCK, &sigset, NULL);
+    assert(res == 0);
+
+    // create signalfd with given sigmask
+    h_fd_signal = signalfd(-1, &sigset, 0);
+    assert(h_fd_signal != -1);
 
     // create tcp server socket and epoll instance
-    res = rpchat_begin_networking(port_num, &h_fd_server, &h_fd_epoll);
+    res = rpchat_begin_networking(
+        port_num, &h_fd_server, &h_fd_epoll, &h_fd_signal);
     if (0 > h_fd_epoll)
     {
         goto leave;
@@ -40,14 +59,14 @@ rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
     p_tpool = rplib_tpool_create(RPCHAT_NUM_THREADS);
     if (!p_tpool)
     {
-        goto leave;
+        goto cleanup;
     }
 
     // create queue for connections
     p_conn_queue = rpchat_conn_queue_create(h_fd_epoll);
     if (!p_conn_queue)
     {
-        goto leave;
+        goto cleanup;
     }
 
     // start threadpool
@@ -68,36 +87,52 @@ rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
         // wait for activity reported by epoll
         loop_res = rpchat_monitor_connections(
             h_fd_epoll, p_ret_event_buf, max_connections);
-        //        if (RPLIB_UNSUCCESS == loop_res)
-        //        {
-        //            res = RPLIB_SUCCESS;
-        //            break;
-        //        }
+
         if (RPLIB_ERROR == loop_res)
         {
-            RPLIB_DEBUG_PRINTF("Error: %s \n",
-                               "Monitor Connections returned error");
+            RPLIB_DEBUG_PRINTF("Error: %s \n", "Monitor Connections error");
             res = RPLIB_UNSUCCESS;
             break;
         }
         // handle incoming connections
-        rpchat_handle_events(p_ret_event_buf,
-                             h_fd_server,
-                             h_fd_epoll,
-                             p_tpool,
-                             p_conn_queue,
-                             loop_res);
+        loop_res = rpchat_handle_events(p_ret_event_buf,
+                                        h_fd_server,
+                                        h_fd_epoll,
+                                        h_fd_signal,
+                                        p_tpool,
+                                        loop_res,
+                                        p_conn_queue);
+        // if handle_events returns 1, planned exit
+        if (RPLIB_UNSUCCESS == loop_res)
+        {
+            res = RPLIB_SUCCESS;
+            break;
+        }
 
         // cleanup per loop
         free(p_ret_event_buf);
         p_ret_event_buf = NULL;
     }
-
+    // notify
+    printf("\nNotice: %s\n", "Shutting down..");
 cleanup:
-    rpchat_conn_queue_destroy(p_conn_queue);
+    // clean tpool, allow jobs to finish
+    if (NULL != p_tpool)
+    {
+        rplib_tpool_destroy(p_tpool, false);
+    }
+    // clean up conn_queue
+    if (NULL != p_conn_queue)
+    {
+        rpchat_conn_queue_destroy(p_conn_queue);
+    }
+    // clean up epoll (and watched fds)
+    if (0 < h_fd_epoll)
+    {
+        rpchat_stop_networking(h_fd_epoll, h_fd_server, h_fd_signal);
+    }
     free(p_ret_event_buf);
     p_ret_event_buf = NULL;
-
 leave:
     return res;
 }
@@ -209,9 +244,10 @@ int
 rpchat_handle_events(struct epoll_event  *p_ret_event_buf,
                      int                  h_fd_server,
                      int                  h_fd_epoll,
+                     int                  h_fd_signal,
                      rplib_tpool_t       *p_tpool,
-                     rpchat_conn_queue_t *p_conn_queue,
-                     size_t               sz_ret_event_buf)
+                     size_t               sz_ret_event_buf,
+                     rpchat_conn_queue_t *p_conn_queue)
 {
     int                       res             = RPLIB_UNSUCCESS;
     unsigned int              event_index     = 0;    // index for event loop
@@ -220,6 +256,15 @@ rpchat_handle_events(struct epoll_event  *p_ret_event_buf,
     // iterate over returned events
     for (event_index = 0; event_index < sz_ret_event_buf; event_index++)
     {
+        // process signal
+        if (h_fd_signal == p_ret_event_buf[event_index].data.fd)
+        {
+            // stop listening
+            epoll_ctl(h_fd_epoll, EPOLL_CTL_DEL, h_fd_signal, NULL);
+            // stop program
+            res = RPLIB_UNSUCCESS;
+            goto leave;
+        }
         // process new connection
         if (h_fd_server == p_ret_event_buf[event_index].data.fd)
         {
@@ -234,6 +279,7 @@ rpchat_handle_events(struct epoll_event  *p_ret_event_buf,
                 continue;
             }
         }
+        // handle new event on existing connection
         // allocate (task args will be freed by callee)
         p_new_proc_args = NULL;
         p_new_proc_args = malloc(sizeof(rpchat_args_proc_event_t));
@@ -693,14 +739,14 @@ rpchat_task_conn_proc_event(void *p_args)
     p_conn_info = (rpchat_conn_info_t *)p_task_args->p_conn_info;
     p_tpool     = p_task_args->p_tpool;
 
+    // update queue on conn info
+    atomic_fetch_sub(&p_conn_info->pending_jobs, 1);
+
     // attempt lock, otherwise requeue
-    if (0 > pthread_mutex_trylock(&p_conn_info->mutex_conn))
+    if (RPLIB_SUCCESS != pthread_mutex_trylock(&p_conn_info->mutex_conn))
     {
         goto requeue_no_unlock;
     }
-
-    // update queue on conn info
-    atomic_fetch_sub(&p_conn_info->pending_jobs, 1);
 
     // if buffer is not allocated, allocate
     if (NULL == p_task_args->p_msg_buf)
@@ -850,8 +896,12 @@ cleanup_no_unlock:
 requeue:
     pthread_mutex_unlock(&p_conn_info->mutex_conn);
 requeue_no_unlock:
-    rpchat_conn_info_enqueue_task(
-        p_conn_info, p_tpool, rpchat_task_conn_proc_event, p_args);
+    // only requeue if not closing
+    if (!atomic_load(&p_tpool->b_terminate))
+    {
+        rpchat_conn_info_enqueue_task(
+            p_conn_info, p_tpool, rpchat_task_conn_proc_event, p_args);
+    }
 leave:
     return;
 }

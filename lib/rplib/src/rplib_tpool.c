@@ -35,9 +35,15 @@ rplib_tpool_initialize(rplib_tpool_t *p_tpool, size_t num_threads)
     assert(p_tpool);
     assert(num_threads > 0);
     // set fields
-    p_tpool->num_threads   = num_threads;
-    p_tpool->p_queue_tasks = rplib_ll_queue_create();
-    p_tpool->p_thread_buf  = calloc(num_threads, sizeof(pthread_t));
+    p_tpool->num_threads       = num_threads;
+    p_tpool->num_threads_busy  = 0;
+    p_tpool->num_threads_alive = 0;
+    p_tpool->p_queue_tasks     = rplib_ll_queue_create();
+    p_tpool->p_thread_buf      = calloc(num_threads, sizeof(pthread_t));
+
+    atomic_store(&p_tpool->b_terminate, false);
+
+    // shutdown
     // initialize pthread specific objects
     if (0 != pthread_mutex_init(&(p_tpool->mutex_task_queue), NULL)
         || 0 != pthread_mutex_init(&(p_tpool->mutex_thrd_count), NULL)
@@ -55,19 +61,25 @@ leave:
 int
 rplib_tpool_destroy(rplib_tpool_t *p_tpool, bool b_shutdown_immediate)
 {
-    int res = RPLIB_UNSUCCESS;
-    // if b_shutdown_immediate, send shutdown signal
-    if (b_shutdown_immediate)
+    int    res          = RPLIB_UNSUCCESS;
+    size_t thread_index = 0;
+    // if not urgent, wait for tasks to complete
+    if (!b_shutdown_immediate)
     {
-        atomic_store(&(p_tpool->b_shutdown), 1);
         rplib_tpool_wait(p_tpool);
     }
-    else
+
+    // set termination flag and tell all threads to wake up
+    atomic_store(&(p_tpool->b_terminate), 1);
+    pthread_cond_broadcast(&p_tpool->cond_task_queue);
+
+    // join threads
+    for (thread_index = 0; thread_index < p_tpool->num_threads;
+         thread_index++)
     {
-        // otherwise wait for jobs to finish first
-        rplib_tpool_wait(p_tpool);
-        atomic_store(&(p_tpool->b_shutdown), 1);
+        pthread_join(p_tpool->p_thread_buf[thread_index], NULL);
     }
+
     // destroy mutexes
     pthread_mutex_destroy(&(p_tpool->mutex_task_queue));
     pthread_mutex_destroy(&(p_tpool->mutex_thrd_count));
@@ -102,7 +114,7 @@ rplib_tpool_enqueue_task(rplib_tpool_t *p_tpool,
               p_tpool->p_queue_tasks, &new_task, sizeof(rplib_tpool_task_t));
     if (!res)
     {
-        RPLIB_DEBUG_PRINTF("Error: %s", "TPOOL ENQUEUE");
+        RPLIB_DEBUG_PRINTF("Error: %s\n", "TPOOL ENQUEUE");
         goto leave;
     }
     // signal that new job available
@@ -119,20 +131,42 @@ rplib_tpool_thread_do(rplib_tpool_t *p_tpool)
 {
     void (*p_function)(void *p_arg) = NULL; // generic ptr to func to run
     void *p_arg                     = NULL; // generic ptr to arg for func
+
+    // if launched, we're alive
+    pthread_mutex_lock(&p_tpool->mutex_thrd_count);
+    p_tpool->num_threads_alive++;
+    pthread_mutex_unlock(&p_tpool->mutex_thrd_count);
+
     for (;;)
     {
+
+        // update working threadcount
+        pthread_mutex_lock(&p_tpool->mutex_thrd_count);
+        p_tpool->num_threads_busy++;
+        pthread_mutex_unlock(&p_tpool->mutex_thrd_count);
+
         // acquire lock on queue (or attempt to lock until we can)
         pthread_mutex_lock(&(p_tpool->mutex_task_queue));
         // wait until signaled for new job
         while (p_tpool->p_queue_tasks->size == 0
-               && !atomic_load(&(p_tpool->b_shutdown)))
+               && !atomic_load(&(p_tpool->b_terminate)))
         {
+            // not busy while waiting
+            pthread_mutex_lock(&p_tpool->mutex_thrd_count);
+            p_tpool->num_threads_busy--;
+            pthread_mutex_unlock(&p_tpool->mutex_thrd_count);
+
             pthread_cond_wait(&(p_tpool->cond_task_queue),
                               &(p_tpool->mutex_task_queue));
+
+            // busy again
+            pthread_mutex_lock(&p_tpool->mutex_thrd_count);
+            p_tpool->num_threads_busy++;
+            pthread_mutex_unlock(&p_tpool->mutex_thrd_count);
         }
 
         // if shutdown, get out
-        if (atomic_load(&(p_tpool->b_shutdown)))
+        if (atomic_load(&(p_tpool->b_terminate)))
         {
             pthread_mutex_unlock(&(p_tpool->mutex_task_queue));
             break;
@@ -146,8 +180,10 @@ rplib_tpool_thread_do(rplib_tpool_t *p_tpool)
                     ->p_arg;
         // update queue
         rplib_ll_queue_dequeue(p_tpool->p_queue_tasks);
+
         // unlock mutex
         pthread_mutex_unlock(&p_tpool->mutex_task_queue);
+
         // run target function
         p_function(p_arg);
 
@@ -161,6 +197,12 @@ rplib_tpool_thread_do(rplib_tpool_t *p_tpool)
         }
         pthread_mutex_unlock(&p_tpool->mutex_thrd_count);
     }
+
+    // where were you when thread was kill
+    pthread_mutex_lock(&p_tpool->mutex_thrd_count);
+    p_tpool->num_threads_busy--;
+    p_tpool->num_threads_alive--;
+    pthread_mutex_unlock(&p_tpool->mutex_thrd_count);
 
     pthread_exit(NULL);
 }
@@ -191,7 +233,7 @@ rplib_tpool_start(rplib_tpool_t *p_tpool)
                              (void *)p_tpool);
         if (0 != res)
         {
-            RPLIB_DEBUG_PRINTF("Error: %s", "TPOOL THREAD CREATE");
+            RPLIB_DEBUG_PRINTF("Error: %s\n", "TPOOL THREAD CREATE");
             res = RPLIB_UNSUCCESS;
             goto leave;
         }
@@ -210,6 +252,7 @@ rplib_tpool_wait(rplib_tpool_t *p_tpool)
     // a) job queue has items (non-zero)
     // b) there are threads working (non-zero)
     pthread_mutex_lock(&p_tpool->mutex_thrd_count);
+
     while (p_tpool->num_threads_busy || p_tpool->p_queue_tasks->size)
     {
         // await all threads idle condition

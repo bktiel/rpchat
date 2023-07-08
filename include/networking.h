@@ -21,7 +21,14 @@
  */
 int rpchat_begin_networking(unsigned int port_num,
                             int         *p_h_fd_server,
-                            int         *p_h_fd_epoll);
+                            int         *p_h_fd_epoll,
+                            int         *p_h_fd_signal);
+
+/**
+ * Stop networking for basic chat server
+ * @param h_fd_epoll Epoll instance file descriptor
+ */
+void rpchat_stop_networking(int h_fd_epoll, int h_fd_server, int h_fd_signal);
 
 /**
  * Setup a TCP server socket
@@ -44,7 +51,8 @@ int rpchat_monitor_connections(int                 h_fd_epoll,
 /**
  * Accept a new connection and return the socket descriptor
  * @param h_fd_server File descriptor for server
- * @return Socket descriptor of new connection on success, RPLIB_ERROR on problems
+ * @return Socket descriptor of new connection on success, RPLIB_ERROR on
+ * problems
  */
 int rpchat_accept_new_connection(unsigned int h_fd_server);
 
@@ -54,8 +62,7 @@ int rpchat_accept_new_connection(unsigned int h_fd_server);
  * @param h_fd File descriptor for related connection
  * @return RPLIB_SUCCESS on no problems, RPLIB_UNSUCCESS otherwise
  */
-int
-rpchat_close_connection(int h_fd_epoll, int h_fd);
+int rpchat_close_connection(int h_fd_epoll, int h_fd);
 
 /**
  * Receive message from a given client

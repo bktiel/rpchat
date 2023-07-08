@@ -44,7 +44,7 @@ typedef enum rpchat_connection_status
 {
     RPCHAT_CONN_PRE_REGISTER,
     RPCHAT_CONN_AVAILABLE,      // connection is available to receive data
-    RPCHAT_CONN_SEND_STAT,       // send a message outbound
+    RPCHAT_CONN_SEND_STAT,      // send a message outbound
     RPCHAT_CONN_SEND_MSG,       // send a message outbound
     RPCHAT_CONN_PENDING_STATUS, // data sent, awaiting status response
     RPCHAT_CONN_ERR,            // error state
@@ -173,14 +173,16 @@ rpchat_conn_info_t *rpchat_find_by_username(
 /**
  * Given activity reported by epoll on a buffer of events, take appropriate
  * action.
- * @return RPLIB_SUCCESS on no problems, otherwise, RP_UNSUCCESS
+ * @return RPLIB_SUCCESS on no problems, RPLIB_UNSUCCESS on scheduled stop,
+ * RPLIB error otherwise
  */
 int rpchat_handle_events(struct epoll_event  *p_ret_event_buf,
                          int                  h_fd_server,
                          int                  h_fd_epoll,
+                         int                  h_fd_signal,
                          rplib_tpool_t       *p_tpool,
-                         rpchat_conn_queue_t *p_conn_queue,
-                         size_t               sz_ret_event_buf);
+                         size_t               sz_ret_event_buf,
+                         rpchat_conn_queue_t *p_conn_queue);
 
 /**
  * Handle a new incoming connection
