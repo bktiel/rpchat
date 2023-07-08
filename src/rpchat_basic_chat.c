@@ -6,7 +6,7 @@
  * COPYRIGHT NOTICE: None
  */
 
-#include "basic_chat.h"
+#include "rpchat_basic_chat.h"
 
 #include <assert.h>
 #include <malloc.h>
@@ -16,12 +16,14 @@
 #include <sys/signalfd.h>
 
 #include "endian.h"
-#include "networking.h"
+#include "rpchat_networking.h"
 #include "rplib_common.h"
 #include "rplib_tpool.h"
 
 int
-rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
+rpchat_begin_chat_server(unsigned int port_num,
+                         unsigned int max_connections,
+                         char        *p_log_location)
 {
     int                  res         = RPLIB_UNSUCCESS; // assume failure
     int                  h_fd_server = RPLIB_ERROR;     // server socket fd

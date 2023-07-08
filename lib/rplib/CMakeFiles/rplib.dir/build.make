@@ -83,24 +83,10 @@ lib/rplib/CMakeFiles/rplib.dir/src/rplib_common.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rplib.dir/src/rplib_common.c.s"
 	cd /mnt/c/Users/cocka/Repos/rpchat/lib/rplib && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_common.c -o CMakeFiles/rplib.dir/src/rplib_common.c.s
 
-lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.o: lib/rplib/CMakeFiles/rplib.dir/flags.make
-lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.o: lib/rplib/src/rplib_hashmap.c
-lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.o: lib/rplib/CMakeFiles/rplib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.o"
-	cd /mnt/c/Users/cocka/Repos/rpchat/lib/rplib && $(CMAKE_COMMAND) -E __run_co_compile --tidy="/usr/bin/clang-tidy;--checks=*,             -llvm-include-order,             -cppcoreguidelines-*,             -altera-struct-pack-align,             -fsanitize=thread,             -android-cloexec-open,             -hicpp-signed-bitwise,             -readability-magic-numbers,             -readability-function-cognitive-complexity,             -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,             -llvmlibc-restrict-system-libc-headers,             -hiccp-no-assembler;--extra-arg-before=--driver-mode=gcc" --source=/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_hashmap.c -- /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.o -MF CMakeFiles/rplib.dir/src/rplib_hashmap.c.o.d -o CMakeFiles/rplib.dir/src/rplib_hashmap.c.o -c /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_hashmap.c
-
-lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/rplib.dir/src/rplib_hashmap.c.i"
-	cd /mnt/c/Users/cocka/Repos/rpchat/lib/rplib && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_hashmap.c > CMakeFiles/rplib.dir/src/rplib_hashmap.c.i
-
-lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/rplib.dir/src/rplib_hashmap.c.s"
-	cd /mnt/c/Users/cocka/Repos/rpchat/lib/rplib && /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_hashmap.c -o CMakeFiles/rplib.dir/src/rplib_hashmap.c.s
-
 lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o: lib/rplib/CMakeFiles/rplib.dir/flags.make
 lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o: lib/rplib/src/rplib_ll_queue.c
 lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o: lib/rplib/CMakeFiles/rplib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o"
 	cd /mnt/c/Users/cocka/Repos/rpchat/lib/rplib && $(CMAKE_COMMAND) -E __run_co_compile --tidy="/usr/bin/clang-tidy;--checks=*,             -llvm-include-order,             -cppcoreguidelines-*,             -altera-struct-pack-align,             -fsanitize=thread,             -android-cloexec-open,             -hicpp-signed-bitwise,             -readability-magic-numbers,             -readability-function-cognitive-complexity,             -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,             -llvmlibc-restrict-system-libc-headers,             -hiccp-no-assembler;--extra-arg-before=--driver-mode=gcc" --source=/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_ll_queue.c -- /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o -MF CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o.d -o CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o -c /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_ll_queue.c
 
 lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.i: cmake_force
@@ -114,7 +100,7 @@ lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.s: cmake_force
 lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.o: lib/rplib/CMakeFiles/rplib.dir/flags.make
 lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.o: lib/rplib/src/rplib_tpool.c
 lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.o: lib/rplib/CMakeFiles/rplib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.o"
 	cd /mnt/c/Users/cocka/Repos/rpchat/lib/rplib && $(CMAKE_COMMAND) -E __run_co_compile --tidy="/usr/bin/clang-tidy;--checks=*,             -llvm-include-order,             -cppcoreguidelines-*,             -altera-struct-pack-align,             -fsanitize=thread,             -android-cloexec-open,             -hicpp-signed-bitwise,             -readability-magic-numbers,             -readability-function-cognitive-complexity,             -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,             -llvmlibc-restrict-system-libc-headers,             -hiccp-no-assembler;--extra-arg-before=--driver-mode=gcc" --source=/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_tpool.c -- /usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.o -MF CMakeFiles/rplib.dir/src/rplib_tpool.c.o.d -o CMakeFiles/rplib.dir/src/rplib_tpool.c.o -c /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_tpool.c
 
 lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.i: cmake_force
@@ -128,7 +114,6 @@ lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.s: cmake_force
 # Object files for target rplib
 rplib_OBJECTS = \
 "CMakeFiles/rplib.dir/src/rplib_common.c.o" \
-"CMakeFiles/rplib.dir/src/rplib_hashmap.c.o" \
 "CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o" \
 "CMakeFiles/rplib.dir/src/rplib_tpool.c.o"
 
@@ -136,12 +121,11 @@ rplib_OBJECTS = \
 rplib_EXTERNAL_OBJECTS =
 
 lib/rplib/librplib.a: lib/rplib/CMakeFiles/rplib.dir/src/rplib_common.c.o
-lib/rplib/librplib.a: lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.o
 lib/rplib/librplib.a: lib/rplib/CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o
 lib/rplib/librplib.a: lib/rplib/CMakeFiles/rplib.dir/src/rplib_tpool.c.o
 lib/rplib/librplib.a: lib/rplib/CMakeFiles/rplib.dir/build.make
 lib/rplib/librplib.a: lib/rplib/CMakeFiles/rplib.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking C static library librplib.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/mnt/c/Users/cocka/Repos/rpchat/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking C static library librplib.a"
 	cd /mnt/c/Users/cocka/Repos/rpchat/lib/rplib && $(CMAKE_COMMAND) -P CMakeFiles/rplib.dir/cmake_clean_target.cmake
 	cd /mnt/c/Users/cocka/Repos/rpchat/lib/rplib && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/rplib.dir/link.txt --verbose=$(VERBOSE)
 

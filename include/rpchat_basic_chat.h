@@ -57,7 +57,6 @@ typedef struct rpchat_basic_chat_string
     char      contents[RPCHAT_MAX_STR_LENGTH];
 } rpchat_string_t;
 
-int rpchat_basic_chat_string_clear(rpchat_string_t *p_string);
 
 /**
  * Conn_Queue holds a linked list of all conn_info objects, a mutex for it, as
@@ -157,7 +156,8 @@ typedef struct __attribute__((__packed__)) rpchat_packet_status
  * success
  */
 int rpchat_begin_chat_server(unsigned int port_num,
-                             unsigned int max_connections);
+                             unsigned int max_connections,
+                             char        *p_log_location);
 
 /**
  * Search a Queue of `rpchat_conn_info_t` objects for an object associated with

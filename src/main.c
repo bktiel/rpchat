@@ -16,9 +16,9 @@
 #include <string.h>
 #include <sys/resource.h>
 
-#include "basic_chat.h"
-#include "networking.h"
-#include "rplib_common.h"
+#include "rpchat_basic_chat.h"
+#include "rpchat_file_io.h"
+#include "rpchat_networking.h"
 
 /**
  * Parse command-line arguments
@@ -29,7 +29,11 @@
  * @return 0 on success, 1 on problems
  */
 static int
-get_arguments(int argc, char **pp_argv, int *p_port_num, char *p_log_location)
+rpchat_get_arguments(int     argc,
+                     char  **pp_argv,
+                     int    *p_port_num,
+                     char   *p_log_location,
+                     size_t *p_sz_log_location)
 {
     int   opt = 0;
     char *next_char; // used for strtol
@@ -72,7 +76,8 @@ get_arguments(int argc, char **pp_argv, int *p_port_num, char *p_log_location)
     *p_port_num = port_num;
     if (NULL != p_temp_log_location)
     {
-        snprintf(p_log_location, PATH_MAX, "%s", p_temp_log_location);
+        *p_sz_log_location
+            = snprintf(p_log_location, PATH_MAX, "%s", p_temp_log_location);
     }
     goto leave;
 print_usage:
@@ -99,10 +104,14 @@ main(int argc, char **argv)
 {
     struct rlimit rlim;        // used for call to getrlimit
     int res = RPLIB_UNSUCCESS; // assume error (in case of early termination)
-    int port_num                  = 0;  // port number to host on
-    unsigned long max_descriptors = -1; // how many descriptors can
-                                        // open per-process
-    char *p_log_location = NULL;
+    int port_num     = 0;      // port number to host on
+    int h_fd_log_loc = RPLIB_ERROR;       // file descriptor for log location
+    unsigned long max_descriptors = -1;   // how many descriptors can open
+    char          log_location[PATH_MAX]; // log location buffer
+    size_t        sz_log_loc = 0;         // size of log location
+
+    // log_location default 0
+    memset(log_location, 0, PATH_MAX);
 
     // get max descriptors using rlimit
     // On error, -1 is returned, and errno is set appropriately.
@@ -111,25 +120,34 @@ main(int argc, char **argv)
         perror("rlimit");
         goto leave;
     }
+
     // subtract amt known used descriptors from hypothetically available for use
     max_descriptors = rlim.rlim_cur - RPCHAT_MAX_USABLE_DESCRIPTOR_OFFSET;
 
     // parse command-line arguments
-    if (RPLIB_SUCCESS != get_arguments(argc, argv, &port_num, p_log_location))
+    if (RPLIB_SUCCESS
+        != rpchat_get_arguments(
+            argc, argv, &port_num, log_location, &sz_log_loc))
     {
         goto leave;
     }
 
-    // TODO: verify log_location perms, make call to dup
+    // verify log location
+    if (0 < sz_log_loc)
+    {
+        h_fd_log_loc = rpchat_open_log_location(log_location);
+    }
 
     // print args (for situational awareness)
     printf("Port: %d\n", port_num);
-    printf("Log Location: %s\n",
-           NULL != p_log_location ? p_log_location : "stdout");
+    // if log location not provided or invalid, use stdout exclusively
+    printf("Log Location: %s\n", 0 < h_fd_log_loc ? log_location : "stdout");
 
     // begin
-    res = rpchat_begin_chat_server(port_num, max_descriptors);
+    res = rpchat_begin_chat_server(port_num, max_descriptors, log_location);
 
+cleanup:
+    rpchat_close_log_location(h_fd_log_loc);
 leave:
     return res;
 }

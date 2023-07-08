@@ -55,10 +55,10 @@ class BCPClient:
         self.last_msg = None
         self.remote_port = remote_port  # Remote BCP Server Port
         self.remote_ip = remote_ip  # Remote BCP Server Addr
-        self.client_state = self.BCP_CONN_STATUS.SETUP.value
-        self.conn_lock = threading.Lock()
-        self.screen_lock = threading.Lock()
-        self.timeout = BCP_DEFAULT_TIMEOUT
+        self.client_state = self.BCP_CONN_STATUS.SETUP.value  # current state of client
+        self.conn_lock = threading.Lock()  # lock for connection operations
+        self.screen_lock = threading.Lock()  # lock for screen operations
+        self.timeout = BCP_DEFAULT_TIMEOUT  # how long to wait before operation failure
         self.screen = ""
         self.prompt = ""
         # set remaining fields
@@ -169,11 +169,12 @@ class BCPClient:
         self.client_state = self.BCP_CONN_STATUS.SHUTDOWN.value
         exit(1)
 
-    def handle_deliver(self, msg):
+    def handle_deliver(self):
         '''
         Handle an inbound deliver msg
         '''
         sender_len, sender, content_len, content = None, None, None, None
+        msg = ""
         index = 1  # skip opcode
         sender_len_len = 2
         content_len_len = 2
@@ -201,11 +202,12 @@ class BCPClient:
         self.print_screen(f"{sender}: {content}")
         return True
 
-    def handle_stat(self, msg):
+    def handle_stat(self):
         '''
         Handle an inbound status msg
         '''
         stat, stat_msg_len, stat_msg = None, None, None
+        msg = ""
         len_statcode = 1
         len_msg_len = 2
         offset = len_statcode + len_msg_len
@@ -248,7 +250,7 @@ class BCPClient:
         '''
         # trim to fit
         content = content[:min(len(content), BCP_MAX_STR_LEN)]
-        # encode
+        # encode and pack
         fmt = f"!Bh{len(content)}s"
         msg = struct.pack(fmt, BCPClient.BCP_OPCODE.SEND.value, len(content), content.encode('utf-8'))
         return None is self.sock.sendall(msg)
@@ -259,7 +261,7 @@ class BCPClient:
         '''
         # trim
         stat_code = int(str(stat_code)[:1])
-        # encode
+        # encode and pack
         fmt = f"!BB"
         msg = struct.pack(fmt, BCPClient.BCP_OPCODE.STAT.value, stat_code)
         return None is self.sock.sendall(msg)
@@ -283,9 +285,9 @@ class BCPClient:
         # get opcode
         opc = struct.unpack("!B", msg[:1])[0]
         if opc is self.BCP_OPCODE.STAT.value:
-            updated_msg = self.handle_stat(msg)
+            updated_msg = self.handle_stat()
         elif opc is self.BCP_OPCODE.DELVR.value:
-            updated_msg = self.handle_deliver(msg)
+            updated_msg = self.handle_deliver()
             self.send_stat(int(updated_msg == False))
         return updated_msg
 

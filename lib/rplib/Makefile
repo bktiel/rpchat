@@ -154,30 +154,6 @@ src/rplib_common.c.s:
 	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_common.c.s
 .PHONY : src/rplib_common.c.s
 
-src/rplib_hashmap.o: src/rplib_hashmap.c.o
-.PHONY : src/rplib_hashmap.o
-
-# target to build an object file
-src/rplib_hashmap.c.o:
-	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.o
-.PHONY : src/rplib_hashmap.c.o
-
-src/rplib_hashmap.i: src/rplib_hashmap.c.i
-.PHONY : src/rplib_hashmap.i
-
-# target to preprocess a source file
-src/rplib_hashmap.c.i:
-	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.i
-.PHONY : src/rplib_hashmap.c.i
-
-src/rplib_hashmap.s: src/rplib_hashmap.c.s
-.PHONY : src/rplib_hashmap.s
-
-# target to generate assembly for a file
-src/rplib_hashmap.c.s:
-	cd /mnt/c/Users/cocka/Repos/rpchat && $(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/src/rplib_hashmap.c.s
-.PHONY : src/rplib_hashmap.c.s
-
 src/rplib_ll_queue.o: src/rplib_ll_queue.c.o
 .PHONY : src/rplib_ll_queue.o
 
@@ -238,9 +214,6 @@ help:
 	@echo "... src/rplib_common.o"
 	@echo "... src/rplib_common.i"
 	@echo "... src/rplib_common.s"
-	@echo "... src/rplib_hashmap.o"
-	@echo "... src/rplib_hashmap.i"
-	@echo "... src/rplib_hashmap.s"
 	@echo "... src/rplib_ll_queue.o"
 	@echo "... src/rplib_ll_queue.i"
 	@echo "... src/rplib_ll_queue.s"

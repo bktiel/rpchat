@@ -43,7 +43,7 @@ foreach(LIBRARY ${LIBRARIES})
     add_subdirectory("${LIBRARIES_DIR}/${LIBRARY}")
 endforeach(LIBRARY)
 
-add_executable(${BINARY_NAME} ${BINARY_SOURCE} include/basic_chat.h src/basic_chat.c src/networking.c include/networking.h)
+add_executable(${BINARY_NAME} ${BINARY_SOURCE} include/rpchat_basic_chat.h src/rpchat_basic_chat.c src/rpchat_networking.c include/rpchat_networking.h src/rpchat_file_io.c src/rpchat_file_io.h src/rpchat_file_io.h src/rpchat_file_io.c)
 target_link_libraries(${BINARY_NAME} ${LIBRARIES})
 
 

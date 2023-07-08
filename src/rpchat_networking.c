@@ -6,7 +6,7 @@
  * COPYRIGHT NOTICE: None
  */
 
-#include "networking.h"
+#include "rpchat_networking.h"
 
 #include <asm-generic/errno.h>
 #include <errno.h>
