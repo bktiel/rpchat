@@ -1,4 +1,4 @@
-/** @file networking.c
+/** @file rpchat_networking.c
  *
  * @brief Implements networking components required for program
  *
@@ -8,30 +8,36 @@
 
 #include "rpchat_networking.h"
 
-#include <asm-generic/errno.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <malloc.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/epoll.h>
-#include <unistd.h>
-
-#include "rplib_common.h"
-
 int
 rpchat_begin_networking(unsigned int port_num,
                         int         *p_h_fd_server,
                         int         *p_h_fd_epoll,
                         int         *p_h_fd_signal)
 {
-    int res           = RPLIB_ERROR; // default failure in case of early term
-    int h_fd_epoll    = -1;          // fd that describes epoll
-    int h_sock_server = -1;
-    struct epoll_event event_server;
+    int res           = RPLIB_ERROR;  // default failure in case of early term
+    int h_fd_epoll    = -1;           // fd that describes epoll
+    int h_sock_server = -1;           // fd for server socket
+    struct epoll_event event_server;  // event used for server socket
+    struct itimerval   timeout_timer; // timer used for connection timeout
+    sigset_t           sigset;        // sigset to listen for on fd_signal
 
-    // create epoll fd (1 automatically resizes..)
+    // create sigset to assign to sigmask
+    res = sigemptyset(&sigset);
+    assert(res == 0);
+    res = sigaddset(&sigset, SIGINT);
+    assert(res == 0);
+    res = sigaddset(&sigset, SIGALRM);
+    assert(res == 0);
+
+    // set sigmask to receive desired signals
+    res = sigprocmask(SIG_BLOCK, &sigset, NULL);
+    assert(res == 0);
+
+    // create signalfd with given sigmask
+    *p_h_fd_signal = signalfd(-1, &sigset, 0);
+    assert(*p_h_fd_signal != -1);
+
+    // create epoll fd (create1 automatically resizes..)
     h_fd_epoll = epoll_create1(0);
     if (0 > h_fd_epoll)
     {
@@ -70,8 +76,12 @@ rpchat_begin_networking(unsigned int port_num,
     *p_h_fd_server = h_sock_server;
     *p_h_fd_epoll  = h_fd_epoll;
 
-    // return success
-    res = RPLIB_SUCCESS;
+    // start timer
+    timeout_timer.it_interval.tv_sec  = RPCHAT_CLIENT_AUDIT_INTERVAL;
+    timeout_timer.it_interval.tv_usec = 0;
+    timeout_timer.it_value            = timeout_timer.it_interval;
+    // raises SIGALRM every RPCHAT_CLIENT_AUDIT_INTERVAL seconds
+    res = setitimer(ITIMER_REAL, &timeout_timer, NULL);
 
 leave:
     return res;
@@ -80,7 +90,7 @@ leave:
 void
 rpchat_stop_networking(int h_fd_epoll, int h_fd_server, int h_fd_signal)
 {
-    close(h_fd_signal);
+    close(h_fd_server);
     close(h_fd_signal);
     close(h_fd_epoll);
 }
@@ -226,6 +236,22 @@ rpchat_close_connection(int h_fd_epoll, int h_fd)
     {
         goto leave;
     }
+leave:
+    return res;
+}
+
+int
+rpchat_get_signal(int h_fd_signal)
+{
+    int                     res = RPLIB_ERROR;
+    struct signalfd_siginfo siginfo;
+    if (0 > read(h_fd_signal, &siginfo, sizeof siginfo))
+    {
+        goto leave;
+    }
+
+    res = siginfo.ssi_signo;
+
 leave:
     return res;
 }

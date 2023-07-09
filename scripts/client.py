@@ -1,29 +1,17 @@
 #!/usr/bin/python3
-import errno
 import argparse
 import os
 import socket
 import struct
 import re
-import sys
 import threading
-import time
 from enum import Enum
-from select import select
 
-NET_HDR_SZ = 48
-NET_FNAME_MAX = 24
-NET_NAME_FIELD_SZ = 32
 PORT_MAX = 65535
 
 BCP_SOCKET_TIMEOUT = 1  # how long socket waits for packet before cycling
-TFTP_MAX_PKT_SIZE = 516  # max tftp packet size, see assumptions.md
 BCP_MAX_MSG_SIZE = 2048
 BCP_MAX_STR_LEN = 4095
-TFTP_MAX_DATA_SIZE = 512  # max data size IAW rfc 1350
-TFTP_MAX_PATH_LEN = 504  # max path length, see assumptions.md
-TFTP_MIN_PORT = 1024  # min ephemeral port
-TFTP_MAX_PORT = 65535  # max ephemeral port
 
 BCP_DEFAULT_TIMEOUT = 6000
 
@@ -53,6 +41,7 @@ class BCPClient:
         self.sock: socket.socket
         self.username = username  # BCP username
         self.last_msg = None
+        self.return_code = 0
         self.remote_port = remote_port  # Remote BCP Server Port
         self.remote_ip = remote_ip  # Remote BCP Server Addr
         self.client_state = self.BCP_CONN_STATUS.SETUP.value  # current state of client
@@ -72,28 +61,26 @@ class BCPClient:
     def initial_setup(self):
         '''
         Sets up socket for client
-        :return: True on success, False on problems
+        :return: False on problems, otherwise, exits caller (thread/app)
         '''
         # create socket
         if not self.setup_socket():
             print("Unable to connect to server")
             return False
         self.register_client()
-
-        # update state
-        # self.client_state = self.BCP_CONN_STATUS.READY.value
-
         # define threads
         self.inbound_thread = threading.Thread(target=self.handle_inbound, daemon=True)
-        # self.outbound_thread = threading.Thread(target=self.handle_outbound)
         # start threads
         self.inbound_thread.start()
-        # self.outbound_thread.start()
-        # join threads (wait for completion)
+        # main (input) thread
         self.handle_outbound()
-        exit(1)
+        exit(self.return_code)
 
     def clear_screen(self):
+        '''
+        Clear console of all input
+        :return: None
+        '''
         # WINDOWS
         if os.name == 'nt':
             _ = os.system('cls')
@@ -103,6 +90,11 @@ class BCPClient:
             _ = os.system('clear')
 
     def input_screen(self, prompt):
+        '''
+        Handle input to screen
+        :param prompt: Prompt to use before input()
+        :return: Input that was sent
+        '''
         user_input = None
         with self.screen_lock:
             self.clear_screen()
@@ -113,6 +105,11 @@ class BCPClient:
         return user_input
 
     def print_screen(self, msg):
+        '''
+        Print contents of buffer and a new message on to screen
+        :param msg: New message to print
+        :return: None
+        '''
         with self.screen_lock:
             self.clear_screen()
             self.screen += (msg + '\n')
@@ -122,10 +119,8 @@ class BCPClient:
     def handle_outbound(self):
         '''
         Handle messages from user and pushes them to server as SEND messages
+        :return: Runs continuously until exited by user
         '''
-        success = False
-        lding_step = 0
-        lding_seq = ["⢿", "⣻", "⣽", "⣾", "⣷", "⣯", "⣟", "⡿"]
         while True:
             # if shutdown, get out
             self.conn_lock.acquire()
@@ -150,6 +145,7 @@ class BCPClient:
     def handle_inbound(self):
         '''
         Handle messages coming from server
+        :return: Exits caller (thread/app) on error or receipt of negative status message
         '''
         received = None
         msg_buf = None
@@ -172,6 +168,7 @@ class BCPClient:
     def handle_deliver(self):
         '''
         Handle an inbound deliver msg
+        :return: True if Deliver handled successfully; False if not
         '''
         sender_len, sender, content_len, content = None, None, None, None
         msg = ""
@@ -205,6 +202,7 @@ class BCPClient:
     def handle_stat(self):
         '''
         Handle an inbound status msg
+        :return: True if status handled successfully; False if not
         '''
         stat, stat_msg_len, stat_msg = None, None, None
         msg = ""
@@ -221,6 +219,7 @@ class BCPClient:
         except:
             print("Error: Invalid message received from server.")
             return False
+        self.return_code = stat
         # if stat bad..
         if stat != 0:
             self.print_screen(f"Server: Negative status received")
@@ -235,6 +234,7 @@ class BCPClient:
     def register_client(self):
         '''
         Handle registration transaction with the server
+        :return: True
         '''
         ret_stat = None
         fmt = f"!Bh{len(self.username)}s"
@@ -246,7 +246,9 @@ class BCPClient:
 
     def send_send(self, content):
         '''
-        Send a send msg to the server
+        Send a SEND msg to the server
+        :param content: Content to send
+        :return: True if send operation successful; False if not
         '''
         # trim to fit
         content = content[:min(len(content), BCP_MAX_STR_LEN)]
@@ -257,7 +259,9 @@ class BCPClient:
 
     def send_stat(self, stat_code):
         '''
-        Send a status msg to the server
+        Send a STATUS msg to the server
+        :param stat_code: status code to send
+        :return: True if send operation successful; False if not
         '''
         # trim
         stat_code = int(str(stat_code)[:1])
@@ -288,42 +292,9 @@ class BCPClient:
             updated_msg = self.handle_stat()
         elif opc is self.BCP_OPCODE.DELVR.value:
             updated_msg = self.handle_deliver()
+            # NOTE: assumes status 0 is good and status 1 is error
             self.send_stat(int(updated_msg == False))
         return updated_msg
-
-    def handle_incoming_pkt(self, exp: BCP_OPCODE):
-        '''
-        Receives an object of TFTP maximum size from the client socket
-        :param exp Expected opcode from the opcode enum
-        :return: True on handled, False on error
-        '''
-        self.sock.settimeout(BCP_SOCKET_TIMEOUT)
-        try:
-            pkt = self.sock.recvfrom(TFTP_MAX_PKT_SIZE)
-        except socket.timeout:
-            return False
-        addr = pkt[1]
-        pkt = pkt[0]
-        if not pkt:
-            return False
-        # verify/update remote tid
-        if not self.remote_port:
-            self.remote_port = addr[1]
-        else:
-            if self.remote_port != addr[1]:
-                print(f"bad tid (expected {self.remote_port}, got {addr[1]})")
-                return False
-        # get opcode
-        opc = struct.unpack("!H", pkt[:2])[0]
-        # check expected
-        if exp.value != opc and opc != self.TFTP_OPCODE.ERROR.value:
-            return False
-        # get appropriate handler
-        pkt_handler = self.get_pkt_handler(opc)
-        if not pkt_handler:
-            return False
-        # call handler
-        return pkt_handler(pkt)
 
 
 def invalid_args(args):
@@ -363,7 +334,6 @@ def main():
     username = args.u
 
     client = BCPClient(server_port, server_ip, username)
-    exit(ret)
 
 
 if __name__ == "__main__":

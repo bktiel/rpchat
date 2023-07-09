@@ -1,4 +1,4 @@
-/** @file networking.h
+/** @file rpchat_networking.h
  *
  * @brief Implements networking components required for rpchat program
  *
@@ -6,12 +6,29 @@
  * COPYRIGHT NOTICE: None
  */
 
-#include <sys/epoll.h>
-
 #ifndef RPCHAT_NETWORKING_H
 #define RPCHAT_NETWORKING_H
 
-#define RPCHAT_MAX_TCP_MSG 4111
+#include <asm-generic/errno.h>
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <malloc.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/epoll.h>
+#include <sys/signalfd.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+#include "components/rpchat_conn_queue.h"
+#include "rplib_common.h"
+
+#define RPCHAT_MAX_INCOMING_MSG      4111 // maximum expected msg size
+#define RPCHAT_CLIENT_AUDIT_INTERVAL 10   // seconds to wait between checks
+#define RPCHAT_CONNECTION_TIMEOUT    60   // seconds to wait before terminating
 
 /**
  * Begin networking for basic chat server with given arguments
@@ -63,6 +80,14 @@ int rpchat_accept_new_connection(unsigned int h_fd_server);
  * @return RPLIB_SUCCESS on no problems, RPLIB_UNSUCCESS otherwise
  */
 int rpchat_close_connection(int h_fd_epoll, int h_fd);
+
+/**
+ * Helper function to get a signal number raised
+ * @param h_fd_signal Signal FD signal was raised
+ * @return RPLIB_SUCCESS if handled, RPLIB_UNSUCCESS if handled and must exit,
+ * RPLIB_ERR on erroneous behavior
+ */
+int rpchat_get_signal(int h_fd_signal);
 
 /**
  * Receive message from a given client

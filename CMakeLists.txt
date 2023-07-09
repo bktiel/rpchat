@@ -43,7 +43,7 @@ foreach(LIBRARY ${LIBRARIES})
     add_subdirectory("${LIBRARIES_DIR}/${LIBRARY}")
 endforeach(LIBRARY)
 
-add_executable(${BINARY_NAME} ${BINARY_SOURCE} include/rpchat_basic_chat.h src/rpchat_basic_chat.c src/rpchat_networking.c include/rpchat_networking.h src/rpchat_file_io.c src/rpchat_file_io.h src/rpchat_file_io.h src/rpchat_file_io.c)
+add_executable(${BINARY_NAME} ${BINARY_SOURCE} include/rpchat_basic_chat.h src/rpchat_basic_chat.c src/rpchat_networking.c include/rpchat_networking.h src/rpchat_file_io.c include/rpchat_file_io.h include/rpchat_file_io.h src/rpchat_file_io.c include/components/rpchat_conn_queue.h include/components/rpchat_conn_info.h include/components/rpchat_string.h src/components/rpchat_string.c src/components/rpchat_conn_info.c src/components/rpchat_conn_queue.c include/rpchat_basic_chat_util.h include/rpchat_process_event.h include/rpchat_process_event.h src/rpchat_process_event.c src/rpchat_basic_chat_util.c)
 target_link_libraries(${BINARY_NAME} ${LIBRARIES})
 
 

@@ -144,9 +144,8 @@ main(int argc, char **argv)
     printf("Log Location: %s\n", 0 < h_fd_log_loc ? log_location : "stdout");
 
     // begin
-    res = rpchat_begin_chat_server(port_num, max_descriptors, log_location);
+    res = rpchat_begin_chat_server(port_num, max_descriptors);
 
-cleanup:
     rpchat_close_log_location(h_fd_log_loc);
 leave:
     return res;

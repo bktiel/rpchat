@@ -142,6 +142,78 @@ rplib/fast:
 	$(MAKE) $(MAKESILENT) -f lib/rplib/CMakeFiles/rplib.dir/build.make lib/rplib/CMakeFiles/rplib.dir/build
 .PHONY : rplib/fast
 
+src/components/rpchat_conn_info.o: src/components/rpchat_conn_info.c.o
+.PHONY : src/components/rpchat_conn_info.o
+
+# target to build an object file
+src/components/rpchat_conn_info.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_conn_info.c.o
+.PHONY : src/components/rpchat_conn_info.c.o
+
+src/components/rpchat_conn_info.i: src/components/rpchat_conn_info.c.i
+.PHONY : src/components/rpchat_conn_info.i
+
+# target to preprocess a source file
+src/components/rpchat_conn_info.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_conn_info.c.i
+.PHONY : src/components/rpchat_conn_info.c.i
+
+src/components/rpchat_conn_info.s: src/components/rpchat_conn_info.c.s
+.PHONY : src/components/rpchat_conn_info.s
+
+# target to generate assembly for a file
+src/components/rpchat_conn_info.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_conn_info.c.s
+.PHONY : src/components/rpchat_conn_info.c.s
+
+src/components/rpchat_conn_queue.o: src/components/rpchat_conn_queue.c.o
+.PHONY : src/components/rpchat_conn_queue.o
+
+# target to build an object file
+src/components/rpchat_conn_queue.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_conn_queue.c.o
+.PHONY : src/components/rpchat_conn_queue.c.o
+
+src/components/rpchat_conn_queue.i: src/components/rpchat_conn_queue.c.i
+.PHONY : src/components/rpchat_conn_queue.i
+
+# target to preprocess a source file
+src/components/rpchat_conn_queue.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_conn_queue.c.i
+.PHONY : src/components/rpchat_conn_queue.c.i
+
+src/components/rpchat_conn_queue.s: src/components/rpchat_conn_queue.c.s
+.PHONY : src/components/rpchat_conn_queue.s
+
+# target to generate assembly for a file
+src/components/rpchat_conn_queue.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_conn_queue.c.s
+.PHONY : src/components/rpchat_conn_queue.c.s
+
+src/components/rpchat_string.o: src/components/rpchat_string.c.o
+.PHONY : src/components/rpchat_string.o
+
+# target to build an object file
+src/components/rpchat_string.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_string.c.o
+.PHONY : src/components/rpchat_string.c.o
+
+src/components/rpchat_string.i: src/components/rpchat_string.c.i
+.PHONY : src/components/rpchat_string.i
+
+# target to preprocess a source file
+src/components/rpchat_string.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_string.c.i
+.PHONY : src/components/rpchat_string.c.i
+
+src/components/rpchat_string.s: src/components/rpchat_string.c.s
+.PHONY : src/components/rpchat_string.s
+
+# target to generate assembly for a file
+src/components/rpchat_string.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/components/rpchat_string.c.s
+.PHONY : src/components/rpchat_string.c.s
+
 src/main.o: src/main.c.o
 .PHONY : src/main.o
 
@@ -189,6 +261,30 @@ src/rpchat_basic_chat.s: src/rpchat_basic_chat.c.s
 src/rpchat_basic_chat.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/rpchat_basic_chat.c.s
 .PHONY : src/rpchat_basic_chat.c.s
+
+src/rpchat_basic_chat_util.o: src/rpchat_basic_chat_util.c.o
+.PHONY : src/rpchat_basic_chat_util.o
+
+# target to build an object file
+src/rpchat_basic_chat_util.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/rpchat_basic_chat_util.c.o
+.PHONY : src/rpchat_basic_chat_util.c.o
+
+src/rpchat_basic_chat_util.i: src/rpchat_basic_chat_util.c.i
+.PHONY : src/rpchat_basic_chat_util.i
+
+# target to preprocess a source file
+src/rpchat_basic_chat_util.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/rpchat_basic_chat_util.c.i
+.PHONY : src/rpchat_basic_chat_util.c.i
+
+src/rpchat_basic_chat_util.s: src/rpchat_basic_chat_util.c.s
+.PHONY : src/rpchat_basic_chat_util.s
+
+# target to generate assembly for a file
+src/rpchat_basic_chat_util.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/rpchat_basic_chat_util.c.s
+.PHONY : src/rpchat_basic_chat_util.c.s
 
 src/rpchat_file_io.o: src/rpchat_file_io.c.o
 .PHONY : src/rpchat_file_io.o
@@ -238,6 +334,30 @@ src/rpchat_networking.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/rpchat_networking.c.s
 .PHONY : src/rpchat_networking.c.s
 
+src/rpchat_process_event.o: src/rpchat_process_event.c.o
+.PHONY : src/rpchat_process_event.o
+
+# target to build an object file
+src/rpchat_process_event.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/rpchat_process_event.c.o
+.PHONY : src/rpchat_process_event.c.o
+
+src/rpchat_process_event.i: src/rpchat_process_event.c.i
+.PHONY : src/rpchat_process_event.i
+
+# target to preprocess a source file
+src/rpchat_process_event.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/rpchat_process_event.c.i
+.PHONY : src/rpchat_process_event.c.i
+
+src/rpchat_process_event.s: src/rpchat_process_event.c.s
+.PHONY : src/rpchat_process_event.s
+
+# target to generate assembly for a file
+src/rpchat_process_event.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rpchat.dir/build.make CMakeFiles/rpchat.dir/src/rpchat_process_event.c.s
+.PHONY : src/rpchat_process_event.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -248,18 +368,33 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... rpchat"
 	@echo "... rplib"
+	@echo "... src/components/rpchat_conn_info.o"
+	@echo "... src/components/rpchat_conn_info.i"
+	@echo "... src/components/rpchat_conn_info.s"
+	@echo "... src/components/rpchat_conn_queue.o"
+	@echo "... src/components/rpchat_conn_queue.i"
+	@echo "... src/components/rpchat_conn_queue.s"
+	@echo "... src/components/rpchat_string.o"
+	@echo "... src/components/rpchat_string.i"
+	@echo "... src/components/rpchat_string.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
 	@echo "... src/rpchat_basic_chat.o"
 	@echo "... src/rpchat_basic_chat.i"
 	@echo "... src/rpchat_basic_chat.s"
+	@echo "... src/rpchat_basic_chat_util.o"
+	@echo "... src/rpchat_basic_chat_util.i"
+	@echo "... src/rpchat_basic_chat_util.s"
 	@echo "... src/rpchat_file_io.o"
 	@echo "... src/rpchat_file_io.i"
 	@echo "... src/rpchat_file_io.s"
 	@echo "... src/rpchat_networking.o"
 	@echo "... src/rpchat_networking.i"
 	@echo "... src/rpchat_networking.s"
+	@echo "... src/rpchat_process_event.o"
+	@echo "... src/rpchat_process_event.i"
+	@echo "... src/rpchat_process_event.s"
 .PHONY : help
 
 
