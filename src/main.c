@@ -85,7 +85,7 @@ print_usage:
             "Usage: \n rpchat -l[log location (defaults to stdout)] "
             "-p[host port number  "
             "(default %d)]\n",
-            RPCHAT_DEFAULT_TIMEOUT);
+            RPCHAT_DEFAULT_PORT);
     return RPLIB_UNSUCCESS;
 leave:
     return RPLIB_SUCCESS;

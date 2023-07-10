@@ -26,7 +26,8 @@
 #include "components/rpchat_conn_queue.h"
 #include "rplib_common.h"
 
-#define RPCHAT_MAX_INCOMING_MSG      4111 // maximum expected msg size
+#define RPCHAT_DEFAULT_PORT 9001
+#define RPCHAT_MAX_INCOMING_MSG      8195 // maximum expected msg size
 #define RPCHAT_CLIENT_AUDIT_INTERVAL 10   // seconds to wait between checks
 #define RPCHAT_CONNECTION_TIMEOUT    60   // seconds to wait before terminating
 

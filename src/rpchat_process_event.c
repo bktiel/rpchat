@@ -385,6 +385,9 @@ rpchat_task_conn_proc_event(void *p_args)
         goto requeue_no_unlock;
     }
 
+    // update last activity
+    p_conn_info->last_active = time(0);
+
     // if buffer is not allocated, allocate
     if (NULL == p_task_args->p_msg_buf)
     {

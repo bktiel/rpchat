@@ -10,7 +10,7 @@ from enum import Enum
 PORT_MAX = 65535
 
 BCP_SOCKET_TIMEOUT = 1  # how long socket waits for packet before cycling
-BCP_MAX_MSG_SIZE = 2048
+BCP_MAX_MSG_SIZE = 8195
 BCP_MAX_STR_LEN = 4095
 
 BCP_DEFAULT_TIMEOUT = 6000

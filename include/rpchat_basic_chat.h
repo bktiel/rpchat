@@ -23,7 +23,6 @@
 #include "rplib_ll_queue.h"
 #include "rplib_tpool.h"
 
-#define RPCHAT_DEFAULT_PORT 9001
 #define RPCHAT_DEFAULT_LOG  'stdout'
 #define RPCHAT_NUM_THREADS  4
 

@@ -16,3 +16,5 @@ compile_commands.json
 *Makefile
 *CMakeFiles*
 CMakeFiles/*
+CMakeDoxyfile.in
+CMakeDoxygenDefaults.cmake

@@ -16,8 +16,7 @@
  * Constants
  */
 
-#define RPCHAT_MAX_USABLE_DESCRIPTOR_OFFSET 2
-#define RPCHAT_DEFAULT_TIMEOUT 90
+#define RPCHAT_MAX_USABLE_DESCRIPTOR_OFFSET 3 // signalfd, epollfd, serverfd
 
 #endif /* RPCHAT_MAIN_H */
 
