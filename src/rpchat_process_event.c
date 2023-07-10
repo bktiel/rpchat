@@ -419,6 +419,10 @@ rpchat_task_conn_proc_event(void *p_args)
                            "Disconnected for inactivity.");
             p_conn_info->conn_status = RPCHAT_CONN_ERR;
         }
+        else
+        {
+            goto cleanup;
+        }
     }
 
     switch (p_conn_info->conn_status)
