@@ -32,7 +32,7 @@ typedef enum
 {
     RPCHAT_PROC_EVENT_INBOUND, // event is INBOUND to server (status, send, etc)
     RPCHAT_PROC_EVENT_OUTBOUND, // event is OUTBOUND to clients (e.g. deliver)
-    RPCHAT_PROC_EVENT_INACTIVE  // event is explicitly to close client
+    RPCHAT_PROC_EVENT_HEARTBEAT // event is explicitly to close client
 } rpchat_args_proc_event_src_t;
 
 typedef struct

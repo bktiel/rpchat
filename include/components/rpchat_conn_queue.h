@@ -42,7 +42,9 @@ rpchat_conn_queue_t *rpchat_conn_queue_create(int h_fd_epoll);
 int rpchat_conn_queue_destroy(rpchat_conn_queue_t *p_conn_queue);
 /**
  * Clean up a disconnected client's underlying data structures and post a
- * message to all connected clients
+ * message to all connected clients\n\n
+ * WARNING: Assumes the caller has locked the passed conn_info object's mutex.
+ * Unexpected behavior will occur if it has not.
  * @param p_conn_queue Pointer to connection queue object
  * @param p_conn_info Pointer to connection info object corresponding to target
  * @return RPLIB_SUCCESS on success; RPLIB_UNSUCCESS on error

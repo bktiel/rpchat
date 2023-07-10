@@ -385,8 +385,11 @@ rpchat_task_conn_proc_event(void *p_args)
         goto requeue_no_unlock;
     }
 
-    // update last activity
-    p_conn_info->last_active = time(0);
+    // update last activity if not a HEARTBEAT event
+    if(RPCHAT_PROC_EVENT_HEARTBEAT != p_task_args->args_type)
+    {
+        p_conn_info->last_active = time(0);
+    }
 
     // if buffer is not allocated, allocate
     if (NULL == p_task_args->p_msg_buf)
@@ -402,16 +405,18 @@ rpchat_task_conn_proc_event(void *p_args)
         }
     }
 
-    // event is INACTIVE, force state change before processing
+    // event is HEARTBEAT, check how long inactive for
     // if not already CONN_CLOSING or CONN_ERR
-    if (RPCHAT_PROC_EVENT_INACTIVE == p_task_args->args_type
+    if (RPCHAT_PROC_EVENT_HEARTBEAT == p_task_args->args_type
         && (RPCHAT_CONN_CLOSING != p_conn_info->conn_status
             && RPCHAT_CONN_ERR != p_conn_info->conn_status))
     {
-        p_conn_info->stat_msg.len = snprintf(p_conn_info->stat_msg.contents,
-                                             RPCHAT_MAX_STR_LENGTH,
-                                             "Disconnected for inactivity.");
-        p_conn_info->conn_status  = RPCHAT_CONN_ERR;
+        if(RPCHAT_CONNECTION_TIMEOUT>time(0) - p_conn_info->last_active){
+            p_conn_info->stat_msg.len = snprintf(p_conn_info->stat_msg.contents,
+                                                 RPCHAT_MAX_STR_LENGTH,
+                                                 "Disconnected for inactivity.");
+            p_conn_info->conn_status  = RPCHAT_CONN_ERR;
+        }
     }
 
     switch (p_conn_info->conn_status)

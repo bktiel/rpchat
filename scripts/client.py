@@ -122,7 +122,6 @@ class BCPClient:
         :return: Runs continuously until exited by user
         '''
         while True:
-            # if shutdown, get out
             self.conn_lock.acquire()
             if self.client_state is self.BCP_CONN_STATUS.SHUTDOWN.value:
                 return
@@ -230,6 +229,12 @@ class BCPClient:
         if self.client_state is not self.BCP_CONN_STATUS.READY.value:
             self.client_state = self.BCP_CONN_STATUS.READY.value
         return True
+
+    def parse_commands(self):
+        '''
+        Handle client-side commands
+        :return: True
+        '''
 
     def register_client(self):
         '''

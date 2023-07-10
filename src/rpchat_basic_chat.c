@@ -8,11 +8,8 @@
 
 #include "rpchat_basic_chat.h"
 
-
-
 int
-rpchat_begin_chat_server(unsigned int port_num,
-                         unsigned int max_connections)
+rpchat_begin_chat_server(unsigned int port_num, unsigned int max_connections)
 {
     int                  res             = RPLIB_UNSUCCESS; // assume failure
     int                  h_fd_server     = RPLIB_ERROR;     // server socket fd
@@ -263,36 +260,32 @@ rpchat_audit_connections(rpchat_conn_queue_t *p_conn_queue,
         goto leave;
     }
     p_current_node = p_conn_queue->p_conn_ll->p_front;
+    // for every node, eqneuue heartbeat task
     while (NULL != p_current_node)
     {
         p_current_info = (rpchat_conn_info_t *)p_current_node->p_data;
-        // check last active against timeout
-        if (time(0) - p_current_info->last_active > RPCHAT_CONNECTION_TIMEOUT)
+
+        // allocate
+        p_exit_args = malloc(sizeof(rpchat_args_proc_event_t));
+
+        if (NULL == p_exit_args)
         {
-            // allocate
-            p_exit_args = malloc(sizeof(rpchat_args_proc_event_t));
+            goto leave;
+        }
 
-            if (NULL == p_exit_args)
-            {
-                goto leave;
-            }
+        // set up args
+        p_exit_args->p_conn_queue = p_conn_queue;
+        p_exit_args->sz_msg_buf   = 0;
+        p_exit_args->args_type    = RPCHAT_PROC_EVENT_HEARTBEAT;
+        p_exit_args->p_tpool      = p_tpool;
+        p_exit_args->p_msg_buf    = NULL;
+        p_exit_args->p_conn_info  = p_current_info;
 
-            // set up args
-            p_exit_args->p_conn_queue = p_conn_queue;
-            p_exit_args->sz_msg_buf   = 0;
-            p_exit_args->args_type    = RPCHAT_PROC_EVENT_INACTIVE;
-            p_exit_args->p_tpool      = p_tpool;
-            p_exit_args->p_msg_buf    = NULL;
-            p_exit_args->p_conn_info  = p_current_info;
-
-            res = rpchat_conn_info_enqueue_task(p_current_info,
-                                                p_tpool,
-                                                rpchat_task_conn_proc_event,
-                                                p_exit_args);
-            if (RPLIB_SUCCESS != res)
-            {
-                goto leave;
-            }
+        res = rpchat_conn_info_enqueue_task(
+            p_current_info, p_tpool, rpchat_task_conn_proc_event, p_exit_args);
+        if (RPLIB_SUCCESS != res)
+        {
+            goto leave;
         }
         p_current_node = p_current_node->p_next_node;
     }
