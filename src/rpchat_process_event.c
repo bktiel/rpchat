@@ -386,7 +386,7 @@ rpchat_task_conn_proc_event(void *p_args)
     }
 
     // update last activity if not a HEARTBEAT event
-    if(RPCHAT_PROC_EVENT_HEARTBEAT != p_task_args->args_type)
+    if (RPCHAT_PROC_EVENT_HEARTBEAT != p_task_args->args_type)
     {
         p_conn_info->last_active = time(0);
     }
@@ -411,11 +411,13 @@ rpchat_task_conn_proc_event(void *p_args)
         && (RPCHAT_CONN_CLOSING != p_conn_info->conn_status
             && RPCHAT_CONN_ERR != p_conn_info->conn_status))
     {
-        if(RPCHAT_CONNECTION_TIMEOUT>time(0) - p_conn_info->last_active){
-            p_conn_info->stat_msg.len = snprintf(p_conn_info->stat_msg.contents,
-                                                 RPCHAT_MAX_STR_LENGTH,
-                                                 "Disconnected for inactivity.");
-            p_conn_info->conn_status  = RPCHAT_CONN_ERR;
+        if (RPCHAT_CONNECTION_TIMEOUT < (time(0) - p_conn_info->last_active))
+        {
+            p_conn_info->stat_msg.len
+                = snprintf(p_conn_info->stat_msg.contents,
+                           RPCHAT_MAX_STR_LENGTH,
+                           "Disconnected for inactivity.");
+            p_conn_info->conn_status = RPCHAT_CONN_ERR;
         }
     }
 
