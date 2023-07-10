@@ -134,7 +134,7 @@ class BCPClient:
                 self.conn_lock.release()
                 self.last_msg = self.input_screen("")
                 if (len(self.last_msg) == 0):
-                    self.last_msg = '\0'
+                    self.last_msg = ' '
                 # send completed input
                 self.send_send(self.last_msg)
                 self.conn_lock.acquire()

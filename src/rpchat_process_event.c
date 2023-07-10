@@ -723,6 +723,7 @@ rpchat_handle_send(rpchat_conn_queue_t           *p_conn_queue,
 {
     int             res = RPLIB_UNSUCCESS;
     rpchat_string_t curr_msg;
+    rpchat_string_t sanitized_msg;
 
     // get rest of message
     // message length
@@ -745,12 +746,17 @@ rpchat_handle_send(rpchat_conn_queue_t           *p_conn_queue,
     {
         goto leave;
     }
+    rpchat_string_sanitize(&curr_msg, &sanitized_msg, true);
+    if (1 > sanitized_msg.len)
+    {
+        goto leave;
+    }
     // send to all
     res = rpchat_broadcast_msg(p_conn_queue,
                                p_sender_info,
                                &p_sender_info->username,
                                p_tpool,
-                               &curr_msg);
+                               &sanitized_msg);
 leave:
     return res;
 }

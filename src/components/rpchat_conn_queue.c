@@ -8,7 +8,6 @@
 
 #include "components/rpchat_conn_queue.h"
 
-
 rpchat_conn_queue_t *
 rpchat_conn_queue_create(int h_fd_epoll)
 {
@@ -45,12 +44,12 @@ leave:
 int
 rpchat_conn_queue_destroy(rpchat_conn_queue_t *p_conn_queue)
 {
-    int res = RPLIB_UNSUCCESS;
-
     pthread_mutex_destroy(&p_conn_queue->mutex_conn_ll);
-    res = rplib_ll_queue_destroy(p_conn_queue->p_conn_ll);
+    rplib_ll_queue_destroy(p_conn_queue->p_conn_ll);
+    free(p_conn_queue);
+    p_conn_queue = NULL;
 
-    return res;
+    return RPLIB_SUCCESS;
 }
 int
 rpchat_conn_queue_destroy_conn_info(rpchat_conn_queue_t *p_conn_queue,
