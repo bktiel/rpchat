@@ -13,10 +13,10 @@ build.ninja
 .ninja_log
 reports
 reports_html
-compile_commands.json
 *CMakeCache.txt
 *Makefile
 *CMakeFiles*
 CMakeFiles/*
 CMakeDoxyfile.in
 CMakeDoxygenDefaults.cmake
+Testing/Temporary/LastTest.log

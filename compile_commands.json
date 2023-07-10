@@ -1,0 +1,62 @@
+[
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/main.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/main.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/main.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/rpchat_basic_chat.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/rpchat_basic_chat.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/rpchat_basic_chat.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/rpchat_basic_chat_util.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/rpchat_basic_chat_util.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/rpchat_basic_chat_util.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/rpchat_file_io.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/rpchat_file_io.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/rpchat_file_io.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/rpchat_networking.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/rpchat_networking.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/rpchat_networking.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/rpchat_process_event.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/rpchat_process_event.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/rpchat_process_event.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/components/rpchat_string.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/components/rpchat_string.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/components/rpchat_string.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/components/rpchat_conn_info.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/components/rpchat_conn_info.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/components/rpchat_conn_info.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rpchat.dir/src/components/rpchat_conn_queue.c.o -c /mnt/c/Users/cocka/Repos/rpchat/src/components/rpchat_conn_queue.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/src/components/rpchat_conn_queue.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat/lib/rplib",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include/rplib -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rplib.dir/src/rplib_common.c.o -c /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_common.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_common.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat/lib/rplib",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include/rplib -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rplib.dir/src/rplib_ll_queue.c.o -c /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_ll_queue.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_ll_queue.c"
+},
+{
+  "directory": "/mnt/c/Users/cocka/Repos/rpchat/lib/rplib",
+  "command": "/usr/bin/cc  -I/mnt/c/Users/cocka/Repos/rpchat/include -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include/rplib -I/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/include -fsanitize=thread -g -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings -Wvla -Wfloat-equal -g -o CMakeFiles/rplib.dir/src/rplib_tpool.c.o -c /mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_tpool.c",
+  "file": "/mnt/c/Users/cocka/Repos/rpchat/lib/rplib/src/rplib_tpool.c"
+}
+]

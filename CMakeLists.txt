@@ -8,6 +8,8 @@ set(BINARY_NAME rpchat)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "") # works
+
 
 find_program(CLANG_TIDY_PROG clang-tidy)
 if (CLANG_TIDY_PROG)
@@ -51,5 +53,5 @@ target_link_libraries(${BINARY_NAME} ${LIBRARIES})
 
 add_custom_command(TARGET ${BINARY_NAME}
         POST_BUILD
-        COMMAND ./codechecker.sh
+        COMMAND cd ${PROJECT_SOURCE_DIR} && ./codechecker.sh
         )
