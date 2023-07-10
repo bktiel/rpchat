@@ -17,6 +17,7 @@ reports_html
 *Makefile
 *CMakeFiles*
 CMakeFiles/*
+*.a
 CMakeDoxyfile.in
 CMakeDoxygenDefaults.cmake
 Testing/Temporary/LastTest.log
